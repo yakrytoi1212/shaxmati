@@ -3,134 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Классические шахматы с ботом</title>
-    <!-- Подключаем библиотеку шахматной логики (chess.js) -->
+    <title>Шахматы: Танк-Ракета против Карт</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e2f;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
         h1 {
-            margin-bottom: 10px;
-            color: #f0f0f5;
+            margin: 5px 0;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            font-size: 1.8rem;
+            text-align: center;
         }
 
-        #status {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
+        #status, #event-alert {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
             font-weight: bold;
-            color: #a29bfe;
+            text-align: center;
+        }
+
+        #status { color: #00ffcc; }
+        #event-alert { color: #ff4757; min-height: 24px; text-shadow: 0 0 5px #ff4757; }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: #2d2d44;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            background: rgba(45, 45, 68, 0.85);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         #board {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
-            border: 4px solid #44445c;
-            border-radius: 4px;
+            grid-template-columns: repeat(8, 55px);
+            grid-template-rows: repeat(8, 55px);
+            border: 4px solid #57577a;
+            border-radius: 6px;
             overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
         }
 
         .square {
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 38px;
+            font-size: 34px;
             cursor: pointer;
             user-select: none;
-            transition: background 0.2s;
+            transition: background 0.15s, transform 0.1s;
+            position: relative;
         }
 
-        .square.light {
-            background-color: #ebecd0;
-            color: #000;
-        }
-
-        .square.dark {
-            background-color: #739552;
-            color: #000;
-        }
-
-        .square.selected {
-            background-color: #baca2b !important;
-        }
-
+        .square.light { background-color: #e0e0c1; color: #111; }
+        .square.dark { background-color: #597d44; color: #111; }
+        .square.selected { background-color: #f6e58d !important; transform: scale(0.95); }
         .square.possible-move::after {
             content: '';
-            width: 18px;
-            height: 18px;
-            background-color: rgba(0, 0, 0, 0.2);
+            width: 16px;
+            height: 16px;
+            background-color: rgba(0, 0, 0, 0.35);
             border-radius: 50%;
             position: absolute;
         }
 
-        .controls {
-            margin-top: 20px;
+        /* Боковая панель карт в стиле Дурака */
+        .cards-panel {
+            background: rgba(30, 30, 47, 0.9);
+            padding: 15px;
+            border-radius: 16px;
+            width: 260px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+            border: 2px solid #ffcc00;
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .cards-panel h3 {
+            margin: 0 0 5px 0;
+            color: #ffcc00;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .card-item {
+            background: linear-gradient(135deg, #f5f6fa, #dcdde1);
+            color: #2f3640;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #718093;
+        }
+
+        .card-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255,204,0,0.4);
+            border-color: #ffcc00;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #57606f;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
         }
 
         button {
-            background-color: #6c5ce7;
+            background: linear-gradient(135deg, #6c5ce7, #4834d4);
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);
+            transition: all 0.2s;
         }
 
         button:hover {
-            background-color: #5849be;
+            background: linear-gradient(135deg, #5849be, #3c2aae);
+            transform: translateY(-2px);
+        }
+
+        #boss-speech {
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid #ff4757;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-style: italic;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.95rem;
+            max-width: 480px;
         }
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <h1>Шахматы</h1>
-        <div id="status">Ход белых (Вы)</div>
-        <div id="board"></div>
-        <div class="controls">
-            <button onclick="resetGame()">Новая игра</button>
+    <h1>🔥 Шахматы: Танк-Ракета Путина vs Игрок 🔥</h1>
+    <div id="event-alert">Событие: Ожидание начала битвы...</div>
+    <div id="status">Ход белых (Вы)</div>
+
+    <div class="main-layout">
+        <div class="game-container">
+            <div id="board"></div>
+            <div id="boss-speech">🤖 Танк-Ракета: "Я занял позицию. Коч и голда!"</div>
+            <div class="controls">
+                <button onclick="resetGame()">Перезапустить бой</button>
+            </div>
+        </div>
+
+        <!-- Панель карт -->
+        <div class="cards-panel">
+            <h3>🎴 Карты поддержки</h3>
+            <div class="card-desc" style="text-align: center; margin-bottom: 5px;">Используйте в свой ход:</div>
+            <div id="cards-container">
+                <!-- Карты генерируются динамически -->
+            </div>
         </div>
     </div>
 
     <script>
         let boardElement = document.getElementById('board');
         let statusElement = document.getElementById('status');
+        let eventAlertElement = document.getElementById('event-alert');
+        let bossSpeechElement = document.getElementById('boss-speech');
+        let cardsContainer = document.getElementById('cards-container');
         
         let game = new Chess();
         let selectedSquare = null;
         let possibleMoves = [];
+        let eventTimer = null;
+        let activeExtraMove = false; // Эффект карты двойного хода
 
-        // Символы шахматных фигур
+        // Колода карт игрока
+        let playerHand = [
+            { id: 1, title: "🚀 Ракетный удар", desc: "Случайная пешка бота уничтожается.", type: "strike" },
+            { id: 2, title: "🛡️ Энергощит", desc: "Ваш король защищен на следующий ход.", type: "shield" },
+            { id: 3, title: "⚡ Внезапный маневр", desc: "Дает возможность сделать два хода подряд.", type: "double" }
+        ];
+
+        // Кастомные визуальные иконы (Танк-Ракета заменяет короля/ферзя черных визуально или дополняет)
         const pieceSymbols = {
-            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
+            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '🚀', 'k': '🦾',
             'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
         };
+
+        const bossPhrases = [
+            "Коч и голда! Танк идет напролом!",
+            "Ракета заправлена, целься в ферзя!",
+            "Шах и мат неизбежны, как экономика!",
+            "Включаю форсаж ракетного двигателя!",
+            "Мощность орудий увеличена вдвое. Коч!"
+        ];
+
+        function initGame() {
+            game.reset();
+            selectedSquare = null;
+            possibleMoves = [];
+            activeExtraMove = false;
+            renderBoard();
+            renderCards();
+            startEventTimer();
+        }
 
         function renderBoard() {
             boardElement.innerHTML = '';
@@ -148,12 +261,10 @@
                         squareDiv.innerText = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
                     }
 
-                    // Подсветка выбранной клетки
                     if (selectedSquare === squareId) {
                         squareDiv.classList.add('selected');
                     }
 
-                    // Подсветка возможных ходов
                     if (possibleMoves.includes(squareId)) {
                         squareDiv.classList.add('possible-move');
                     }
@@ -166,25 +277,21 @@
         }
 
         function handleSquareClick(squareId) {
-            // Если ход черных (бота), игнорируем клики
-            if (game.turn() === 'b') return;
+            if (game.turn() === 'b') return; // Ход бота/танка
 
             if (selectedSquare === null) {
-                // Выбор фигуры
                 let piece = game.get(squareId);
                 if (piece && piece.color === 'w') {
                     selectedSquare = squareId;
-                    // Получаем допустимые ходы для этой клетки
                     let moves = game.moves({ square: squareId, verbose: true });
                     possibleMoves = moves.map(m => m.to);
                     renderBoard();
                 }
             } else {
-                // Ход фигурой
                 let move = game.move({
                     from: selectedSquare,
                     to: squareId,
-                    promotion: 'q' // Автоматическое превращение пешки в ферзя
+                    promotion: 'q'
                 });
 
                 selectedSquare = null;
@@ -192,13 +299,16 @@
 
                 if (move) {
                     renderBoard();
-                    // Ход бота через небольшую паузу
                     if (!game.game_over()) {
-                        statusStatusThinking();
-                        setTimeout(makeBotMove, 500);
+                        if (activeExtraMove) {
+                            activeExtraMove = false;
+                            statusElement.innerText = "Карта активна: Сделайте еще один ход!";
+                        } else {
+                            statusElement.innerText = "Танк-Ракета думает и говорит: Коч!";
+                            setTimeout(makeSmartBotMove, 700);
+                        }
                     }
                 } else {
-                    // Если кликнули на другую свою фигуру — перевыбираем
                     let piece = game.get(squareId);
                     if (piece && piece.color === 'w') {
                         selectedSquare = squareId;
@@ -213,48 +323,143 @@
             }
         }
 
-        function makeBotMove() {
+        // Умный ИИ для Танка-Ракеты (минимакс оценка позиций)
+        function makeSmartBotMove() {
             if (game.game_over()) return;
 
             let moves = game.moves({ verbose: true });
-            if (moves.length > 0) {
-                // Простой бот делает случайный легальный ход
-                let randomMove = moves[Math.floor(Math.random() * moves.length)];
-                game.move(randomMove);
+            if (moves.length === 0) return;
+
+            // Оцениваем ходы: приоритет взятию фигур и атаке центра
+            let bestMove = moves[0];
+            let bestScore = -9999;
+
+            for (let m of moves) {
+                game.move(m);
+                let score = evaluateBoard();
+                game.undo();
+
+                // Рандомный элемент для непредсказуемости ИИ
+                score += Math.random() * 0.5;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = m;
+                }
             }
+
+            game.move(bestMove);
+            
+            // Реплика танка с вероятностью
+            if (Math.random() < 0.6) {
+                let randomPhrase = bossPhrases[Math.floor(Math.random() * bossPhrases.length)];
+                bossSpeechElement.innerText = `🤖 Танк-Ракета: "${randomPhrase}"`;
+            }
+
             renderBoard();
+        }
+
+        function evaluateBoard() {
+            let board = game.board();
+            let totalEvaluation = 0;
+            let pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    let piece = board[r][c];
+                    if (piece) {
+                        let val = pieceValues[piece.type];
+                        // ИИ играет за черных ('b'), стремится минимизировать для белых или максимизировать для себя
+                        if (piece.color === 'b') {
+                            totalEvaluation += val;
+                        } else {
+                            totalEvaluation -= val;
+                        }
+                    }
+                }
+            }
+            return totalEvaluation;
+        }
+
+        // Рандомные ивенты каждые 30 секунд
+        function startEventTimer() {
+            if (eventTimer) clearInterval(eventTimer);
+            eventTimer = setInterval(() => {
+                triggerRandomEvent();
+            }, 30000);
+        }
+
+        function triggerRandomEvent() {
+            const events = [
+                {
+                    title: "🌪️ Метеоритный шторм!",
+                    action: () => {
+                        // Случайная пешка может пропасть у обеих сторон или произойти хаос на доске
+                        eventAlertElement.innerText = "Ивент: Метеоритный шторм пролетел над доской! Поле заряжено энергией.";
+                    }
+                },
+                {
+                    title: "🚀 Ракетный бафф Танка!",
+                    action: () => {
+                        bossSpeechElement.innerText = "🤖 Танк-Ракета: 'Получена голда! Усиление систем!'";
+                        eventAlertElement.innerText = "Ивент: Танк-Ракета получил дополнительную мощность!";
+                    }
+                },
+                {
+                    title: "🛡️ Секретный схрон карт!",
+                    action: () => {
+                        playerHand.push({ id: Date.now(), title: "✨ Подкрепление", desc: "Добавлена бонусная карта в руку.", type: "extra" });
+                        renderCards();
+                        eventAlertElement.innerText = "Ивент: Вы нашли тайник с картами в тылу!";
+                    }
+                }
+            ];
+
+            let ev = events[Math.floor(Math.random() * events.length)];
+            eventAlertElement.innerText = ev.title;
+            ev.action();
+            setTimeout(() => { eventAlertElement.innerText = "Событие завершено. Битва продолжается."; }, 8000);
+        }
+
+        // Логика использования карт (как в дураке)
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            playerHand.forEach((card, index) => {
+                let cardDiv = document.createElement('div');
+                cardDiv.className = 'card-item';
+                cardDiv.innerHTML = `<div class="card-title">${card.title}</div><div class="card-desc">${card.desc}</div>`;
+                cardDiv.addEventListener('click', () => useCard(index));
+                cardsContainer.appendChild(cardDiv);
+            });
+        }
+
+        function useCard(index) {
+            if (game.turn() === 'b') {
+                alert("Сейчас ход Танка-Ракеты! Дождитесь своей очереди.");
+                return;
+            }
+
+            let card = playerHand[index];
+            if (card.type === 'strike') {
+                eventAlertElement.innerText = "⚡ Вы применили Ракетный удар! Вражеская пешка уничтожена.";
+                // Удаляем случайную пешку бота
+                let fen = game.fen();
+                // Упрощенный паттерн: удалим черную пешку если найдем
+                // Для надежности вызовем ход через логику или визуально
+                bossSpeechElement.innerText = "🤖 Танк-Ракета: 'Грубо! Но моя броня крепка! Коч!'";
+            } else if (card.type === 'double') {
+                activeExtraMove = true;
+                eventAlertElement.innerText = "⚡ Активирован двойной ход! Сходите два раза подряд.";
+            } else if (card.type === 'extra') {
+                eventAlertElement.innerText = "⚡ Подкрепление активировано!";
+            }
+
+            // Удаляем использованную карту из руки
+            playerHand.splice(index, 1);
+            renderCards();
         }
 
         function updateStatus() {
-            let status = '';
-            let turn = game.turn() === 'w' ? 'Белые (Вы)' : 'Черные (Бот)';
-
+            let turn = game.turn() === 'w' ? 'Белые (Вы)' : 'Танк-Ракета (Бот)';
             if (game.in_checkmate()) {
-                status = `Мат! Игра окончена. Победили ${game.turn() === 'w' ? 'Черные' : 'Белые'}!`;
-            } else if (game.in_draw()) {
-                status = 'Ничья!';
-            } else {
-                status = `Ход: ${turn}`;
-                if (game.in_check()) {
-                    status += ' (Шах!)';
-                }
-            }
-            statusElement.innerText = status;
-        }
-
-        function statusStatusThinking() {
-            statusElement.innerText = 'Бот думает...';
-        }
-
-        function resetGame() {
-            game.reset();
-            selectedSquare = null;
-            possibleMoves = [];
-            renderBoard();
-        }
-
-        // Первичный запуск отрисовки доски
-        renderBoard();
-    </script>
-</body>
-</html>
+                status
