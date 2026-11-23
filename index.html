@@ -3,20 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Космическая Симуляция — Солнечная система</title>
+  <title>Космос — Симулятор Солнечной системы</title>
   <style>
-    :root {
-      --bg: #050814;
-      --panel: rgba(11, 17, 36, 0.78);
-      --panel-strong: rgba(13, 20, 42, 0.92);
-      --border: rgba(148, 187, 255, 0.16);
-      --text: #f4f7ff;
-      --muted: #98a6c9;
-      --accent: #5eead4;
-      --accent-2: #60a5fa;
-      --warn: #fbbf24;
-    }
-
     * {
       box-sizing: border-box;
       user-select: none;
@@ -24,892 +12,600 @@
 
     html, body {
       margin: 0;
+      padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--bg);
-      color: var(--text);
+      background: #040711;
+      color: #f8fafc;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     }
 
-    canvas {
-      display: block;
+    #canvas {
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
+      display: block;
       cursor: grab;
     }
 
-    canvas.dragging {
+    #canvas.grabbing {
       cursor: grabbing;
     }
 
-    /* Верхняя панель управления */
-    .top-bar {
+    .hud-top {
       position: fixed;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      z-index: 20;
       pointer-events: none;
-      z-index: 10;
     }
 
-    .glass {
+    .panel {
       pointer-events: auto;
-      background: var(--panel);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-    }
-
-    .brand {
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #fff59d, #f59e0b);
-      box-shadow: 0 0 14px #fbbf24;
-    }
-
-    .brand-title {
-      font-weight: 800;
-      font-size: 15px;
-      letter-spacing: 0.02em;
-    }
-
-    .brand-sub {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .controls {
+      background: rgba(10, 16, 34, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
       padding: 8px 12px;
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .title-box {
+      padding: 8px 14px;
+    }
+
+    .title-main {
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .title-sub {
+      font-size: 11px;
+      color: #94a3b8;
     }
 
     button {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 7px 11px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9px;
+      padding: 6px 10px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s ease;
     }
 
     button:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(94, 234, 212, 0.4);
+      background: rgba(255, 255, 255, 0.16);
     }
 
     button.active {
-      background: rgba(94, 234, 212, 0.18);
-      border-color: var(--accent);
-      color: var(--accent);
+      background: rgba(45, 212, 191, 0.22);
+      border-color: #2dd4bf;
+      color: #5eead4;
     }
 
-    .divider {
-      width: 1px;
-      height: 20px;
-      background: var(--border);
-      margin: 0 2px;
-    }
-
-    /* Нижняя полоса быстрого выбора планет */
-    .dock-wrap {
+    .planet-bar {
       position: fixed;
-      bottom: 14px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
+      z-index: 20;
       max-width: calc(100% - 24px);
-      z-index: 10;
     }
 
-    .dock {
-      padding: 7px 10px;
+    .planet-list {
       display: flex;
       gap: 6px;
       overflow-x: auto;
-      scrollbar-width: none;
+      padding: 7px 10px;
+      background: rgba(10, 16, 34, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
     }
 
-    .dock::-webkit-scrollbar {
-      display: none;
-    }
-
-    .planet-chip {
-      display: flex;
+    .p-btn {
+      display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       white-space: nowrap;
-      padding: 7px 12px;
-      border-radius: 12px;
     }
 
-    .swatch {
-      width: 10px;
-      height: 10px;
+    .dot {
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      flex-shrink: 0;
+      display: inline-block;
     }
 
-    /* Правая карточка с информацией о планете */
-    .info-card {
+    .card {
       position: fixed;
-      top: 78px;
-      right: 14px;
-      width: 330px;
-      max-width: calc(100% - 28px);
-      background: var(--panel-strong);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 18px;
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
-      z-index: 10;
-      transform: translateX(0);
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      top: 74px;
+      right: 12px;
+      width: 310px;
+      max-width: calc(100% - 24px);
+      background: rgba(10, 16, 34, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 16px;
+      padding: 16px;
+      z-index: 20;
+      display: none;
+      backdrop-filter: blur(12px);
     }
 
-    .info-card.hidden {
-      opacity: 0;
-      transform: translateX(24px);
-      pointer-events: none;
+    .card.open {
+      display: block;
     }
 
-    .info-head {
+    .card-top {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+      align-items: flex-start;
+      gap: 8px;
     }
 
-    .info-type {
+    .card-kind {
       font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent);
+      color: #5eead4;
       font-weight: 800;
+      text-transform: uppercase;
     }
 
-    .info-name {
-      margin: 2px 0 0;
-      font-size: 24px;
+    .card-title {
+      margin: 2px 0 8px;
+      font-size: 22px;
       font-weight: 900;
     }
 
-    .close-btn {
-      padding: 4px 9px;
-      border-radius: 8px;
+    .card-desc {
+      margin: 0 0 12px;
       font-size: 13px;
+      line-height: 1.45;
+      color: #cbd5e1;
     }
 
-    .info-desc {
-      margin: 0 0 14px;
-      font-size: 13px;
-      line-height: 1.55;
-      color: #cbd5ee;
-    }
-
-    .stats-grid {
+    .card-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
-    .mini-stat {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 12px;
-      padding: 9px 11px;
-    }
-
-    .mini-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-    }
-
-    .mini-val {
-      font-size: 13px;
-      font-weight: 800;
-      margin-top: 3px;
-      color: var(--text);
-    }
-
-    .fact-box {
-      background: rgba(94, 234, 212, 0.08);
-      border-left: 3px solid var(--accent);
+    .cell {
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 12px;
-      line-height: 1.45;
-      color: #dffaf4;
+      padding: 8px 10px;
     }
 
-    .hint {
-      position: fixed;
-      bottom: 66px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      color: var(--muted);
-      background: rgba(5, 8, 20, 0.65);
-      padding: 5px 12px;
-      border-radius: 999px;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 9;
+    .cell-k {
+      font-size: 10px;
+      color: #94a3b8;
+      text-transform: uppercase;
     }
 
-    @media (max-width: 640px) {
-      .info-card {
-        top: auto;
-        bottom: 74px;
-        right: 12px;
-        left: 12px;
-        width: auto;
-        max-width: none;
-      }
-      .hint {
-        display: none;
-      }
+    .cell-v {
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .card-fact {
+      background: rgba(45, 212, 191, 0.1);
+      border-left: 3px solid #2dd4bf;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.4;
     }
   </style>
 </head>
 <body>
-  <canvas id="space"></canvas>
+  <canvas id="canvas"></canvas>
 
-  <div class="top-bar">
-    <div class="glass brand">
-      <div class="brand-dot"></div>
-      <div>
-        <div class="brand-title">КОСМОС · СОЛНЕЧНАЯ СИСТЕМА</div>
-        <div class="brand-sub" id="camStatus">Свободный обзор · Колёсико: зум</div>
-      </div>
+  <div class="hud-top">
+    <div class="panel title-box">
+      <div class="title-main">СИМУЛЯТОР КОСМОСА</div>
+      <div class="title-sub" id="statusText">ЛКМ — тянуть · Колёсико — зум · Клик по планете — фокус</div>
     </div>
 
-    <div class="glass controls">
-      <button id="pauseBtn" title="Пауза / Продолжить">⏸ Пауза</button>
-      <button class="speed-btn" data-speed="0.25">0.25x</button>
-      <button class="speed-btn active" data-speed="1">1x</button>
-      <button class="speed-btn" data-speed="5">5x</button>
-      <button class="speed-btn" data-speed="20">20x</button>
-      <div class="divider"></div>
-      <button id="orbitsBtn" class="active">Орбиты</button>
-      <button id="labelsBtn" class="active">Подписи</button>
-      <button id="resetViewBtn">Сброс</button>
+    <div class="panel">
+      <button id="btnPause">⏸ Пауза</button>
+      <button class="spd active" data-spd="1">1x</button>
+      <button class="spd" data-spd="4">4x</button>
+      <button class="spd" data-spd="12">12x</button>
+      <button id="btnOrbits" class="active">Орбиты</button>
+      <button id="btnLabels" class="active">Имена</button>
+      <button id="btnReset">Центр</button>
     </div>
   </div>
 
-  <aside class="info-card hidden" id="infoCard">
-    <div class="info-head">
+  <div class="card" id="card">
+    <div class="card-top">
       <div>
-        <div class="info-type" id="infoType">ПЛАНЕТА</div>
-        <h2 class="info-name" id="infoName">Земля</h2>
+        <div class="card-kind" id="cKind"></div>
+        <h2 class="card-title" id="cTitle"></h2>
       </div>
-      <button class="close-btn" id="closeCardBtn" title="Закрыть">✕</button>
+      <button id="btnCloseCard">✕</button>
     </div>
-    <p class="info-desc" id="infoDesc"></p>
-    <div class="stats-grid">
-      <div class="mini-stat">
-        <div class="mini-label">От Солнца</div>
-        <div class="mini-val" id="statDist">—</div>
-      </div>
-      <div class="mini-stat">
-        <div class="mini-label">Год длится</div>
-        <div class="mini-val" id="statYear">—</div>
-      </div>
-      <div class="mini-stat">
-        <div class="mini-label">Температура</div>
-        <div class="mini-val" id="statTemp">—</div>
-      </div>
-      <div class="mini-stat">
-        <div class="mini-label">Спутники</div>
-        <div class="mini-val" id="statMoons">—</div>
-      </div>
+    <p class="card-desc" id="cDesc"></p>
+    <div class="card-grid">
+      <div class="cell"><div class="cell-k">От Солнца</div><div class="cell-v" id="cDist"></div></div>
+      <div class="cell"><div class="cell-k">Год</div><div class="cell-v" id="cYear"></div></div>
+      <div class="cell"><div class="cell-k">Температура</div><div class="cell-v" id="cTemp"></div></div>
+      <div class="cell"><div class="cell-k">Спутники</div><div class="cell-v" id="cMoons"></div></div>
     </div>
-    <div class="fact-box" id="factBox"></div>
-  </aside>
+    <div class="card-fact" id="cFact"></div>
+  </div>
 
-  <div class="hint">Тяни фон · Крути колёсико для зума · Кликни по объекту для фокуса</div>
-
-  <div class="dock-wrap">
-    <div class="glass dock" id="dock"></div>
+  <div class="planet-bar">
+    <div class="planet-list" id="planetList"></div>
   </div>
 
   <script>
-    const canvas = document.getElementById('space');
-    const ctx = canvas.getContext('2d');
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
 
-    const BODIES = [
-      {
-        id: 'sun',
-        name: 'Солнце',
-        type: 'Жёлтый карлик (звезда)',
-        swatch: '#fbbf24',
-        radius: 36,
-        orbit: 0,
-        speed: 0,
-        angle: 0,
-        colors: ['#fff7ae', '#fbbf24', '#ea580c'],
-        glow: 'rgba(251, 191, 36, 0.35)',
-        dist: '0 а.е.',
-        year: '230 млн лет (вокруг центра Галактики)',
-        temp: '~5 500 °C (поверхность)',
-        moons: '8 планет на орбите',
-        desc: 'Массивный шар из раскалённой плазмы, на который приходится 99,86% массы всей Солнечной системы.',
-        fact: 'Каждую секунду Солнце превращает около 600 миллионов тонн водорода в гелий.'
-      },
-      {
-        id: 'mercury',
-        name: 'Меркурий',
-        type: 'Планета земной группы',
-        swatch: '#a8a29e',
-        radius: 6.5,
-        orbit: 78,
-        speed: 1.6,
-        angle: 0.9,
-        colors: ['#d6d3d1', '#8b8580', '#57534e'],
-        dist: '0.39 а.е. (57.9 млн км)',
-        year: '88 земных суток',
-        temp: 'от -180 °C до +430 °C',
-        moons: '0',
-        desc: 'Самая близкая к Солнцу и самая маленькая планета системы с поверхностью, покрытой кратерами.',
-        fact: 'Из-за почти полного отсутствия атмосферы днём здесь адская жара, а ночью — сильный мороз.'
-      },
-      {
-        id: 'venus',
-        name: 'Венера',
-        type: 'Планета земной группы',
-        swatch: '#f5d08a',
-        radius: 10.5,
-        orbit: 118,
-        speed: 1.18,
-        angle: 2.3,
-        colors: ['#fef08a', '#eab308', '#b45309'],
-        atmosphere: 'rgba(253, 224, 71, 0.22)',
-        dist: '0.72 а.е. (108.2 млн км)',
-        year: '225 земных суток',
-        temp: '~+465 °C',
-        moons: '0',
-        desc: 'Самая горячая планета Солнечной системы, окутанная плотными облаками из серной кислоты.',
-        fact: 'Венера вращается вокруг своей оси в обратную сторону — медленнее, чем делает оборот вокруг Солнца.'
-      },
-      {
-        id: 'earth',
-        name: 'Земля',
-        type: 'Планета земной группы',
-        swatch: '#38bdf8',
-        radius: 11.5,
-        orbit: 164,
-        speed: 1.0,
-        angle: 4.1,
-        colors: ['#7dd3fc', '#2563eb', '#15803d'],
-        atmosphere: 'rgba(56, 189, 248, 0.28)',
-        hasMoon: true,
-        dist: '1.00 а.е. (149.6 млн км)',
-        year: '365.25 суток',
-        temp: 'средняя ~+15 °C',
-        moons: '1 (Луна)',
-        desc: 'Наш дом — единственный известный мир с жидкими океанами на поверхности, защитной атмосферой и жизнью.',
-        fact: 'Около 71% поверхности Земли покрыто водой, а магнитное поле спасает нас от солнечного ветра.'
-      },
-      {
-        id: 'mars',
-        name: 'Марс',
-        type: 'Планета земной группы',
-        swatch: '#f87171',
-        radius: 8.5,
-        orbit: 210,
-        speed: 0.8,
-        angle: 5.4,
-        colors: ['#fca5a5', '#dc2626', '#7f1d1d'],
-        atmosphere: 'rgba(248, 113, 113, 0.16)',
-        dist: '1.52 а.е. (227.9 млн км)',
-        year: '687 земных суток',
-        temp: 'средняя ~-63 °C',
-        moons: '2 (Фобос и Деймос)',
-        desc: 'Красная планета с ржавой пылью, гигантскими вулканами и высохшими руслами древних рек.',
-        fact: 'На Марсе находится Олимп — самый высокий известный вулкан Солнечной системы (около 21 км).'
-      },
-      {
-        id: 'jupiter',
-        name: 'Юпитер',
-        type: 'Газовый гигант',
-        swatch: '#e0a96d',
-        radius: 24,
-        orbit: 292,
-        speed: 0.43,
-        angle: 1.5,
-        colors: ['#fde68a', '#d97706', '#78350f'],
-        bands: true,
-        atmosphere: 'rgba(251, 191, 36, 0.18)',
-        dist: '5.20 а.е. (778.5 млн км)',
-        year: '11.86 земных лет',
-        temp: '~-110 °C (верх облаков)',
-        moons: '95 (в т.ч. Европа, Ганимед)',
-        desc: 'Крупнейшая планета Солнечной системы, знаменитая полосатыми облаками и Большим красным пятном.',
-        fact: 'Юпитер настолько огромен, что внутри него поместилось бы более 1 300 Земель.'
-      },
-      {
-        id: 'saturn',
-        name: 'Сатурн',
-        type: 'Газовый гигант',
-        swatch: '#fcd34d',
-        radius: 20,
-        orbit: 376,
-        speed: 0.29,
-        angle: 3.6,
-        colors: ['#fef08a', '#eab308', '#854d0e'],
-        rings: true,
-        atmosphere: 'rgba(254, 240, 138, 0.16)',
-        dist: '9.58 а.е. (1.43 млрд км)',
-        year: '29.45 земных лет',
-        temp: '~-140 °C',
-        moons: '146 (в т.ч. Титан)',
-        desc: 'Планета с самой впечатляющей системой колец изо льда, камня и космической пыли.',
-        fact: 'Средняя плотность Сатурна ниже плотности воды — гипотетически он бы в ней плавал.'
-      },
-      {
-        id: 'uranus',
-        name: 'Уран',
-        type: 'Ледяной гигант',
-        swatch: '#67e8f9',
-        radius: 15,
-        orbit: 452,
-        speed: 0.2,
-        angle: 5.0,
-        colors: ['#a5f3fc', '#22d3ee', '#0e7490'],
-        atmosphere: 'rgba(103, 232, 249, 0.2)',
-        dist: '19.2 а.е. (2.87 млрд км)',
-        year: '84 земных года',
-        temp: '~-195 °C',
-        moons: '28',
-        desc: 'Ледяной гигант бирюзового оттенка из-за метана в верхних слоях атмосферы.',
-        fact: 'Ось вращения Урана наклонена почти на 98° — он буквально катится по своей орбите на боку.'
-      },
-      {
-        id: 'neptune',
-        name: 'Нептун',
-        type: 'Ледяной гигант',
-        swatch: '#60a5fa',
-        radius: 14.5,
-        orbit: 518,
-        speed: 0.15,
-        angle: 0.4,
-        colors: ['#93c5fd', '#2563eb', '#1e3a8a'],
-        atmosphere: 'rgba(96, 165, 250, 0.22)',
-        dist: '30.05 а.е. (4.5 млрд км)',
-        year: '164.8 земных лет',
-        temp: '~-200 °C',
-        moons: '16 (в т.ч. Тритон)',
-        desc: 'Самая дальняя большая планета Солнечной системы, где бушуют сверхзвуковые ветры.',
-        fact: 'Скорость ветров на Нептуне достигает 2 100 км/ч — быстрее звука.'
+      const BODIES = [
+        {
+          id: 'sun', name: 'Солнце', kind: 'Звезда', color: '#fbbf24',
+          grad: ['#fffbeb', '#fbbf24', '#ea580c'], r: 34, orbit: 0, speed: 0, angle: 0,
+          dist: '0 а.е.', year: '—', temp: '~5 500 °C', moons: '8 планет',
+          desc: 'Центр нашей системы — огромный шар из горячей плазмы.',
+          fact: 'Свет от Солнца долетает до Земли примерно за 8 минут 20 секунд.'
+        },
+        {
+          id: 'mercury', name: 'Меркурий', kind: 'Планета', color: '#a8a29e',
+          grad: ['#e7e5e4', '#a8a29e', '#57534e'], r: 6, orbit: 72, speed: 1.6, angle: 0.5,
+          dist: '0.39 а.е.', year: '88 дней', temp: '-180..+430 °C', moons: '0',
+          desc: 'Самая близкая к Солнцу планета, покрытая кратерами.',
+          fact: 'На Меркурии почти нет атмосферы, поэтому тепло там не удерживается.'
+        },
+        {
+          id: 'venus', name: 'Венера', kind: 'Планета', color: '#facc15',
+          grad: ['#fef9c3', '#eab308', '#a16207'], r: 10, orbit: 108, speed: 1.15, angle: 1.8,
+          dist: '0.72 а.е.', year: '225 дней', temp: '~+465 °C', moons: '0',
+          desc: 'Самая жаркая планета системы под плотными облаками.',
+          fact: 'День на Венере длится дольше её года вокруг Солнца.'
+        },
+        {
+          id: 'earth', name: 'Земля', kind: 'Планета', color: '#38bdf8',
+          grad: ['#bae6fd', '#2563eb', '#15803d'], r: 11, orbit: 150, speed: 1.0, angle: 3.1,
+          dist: '1.00 а.е.', year: '365 дней', temp: 'сред. +15 °C', moons: '1 (Луна)',
+          desc: 'Наш дом с океанами, атмосферой и жизнью.',
+          fact: 'Около 71% поверхности Земли занимает вода.'
+        },
+        {
+          id: 'mars', name: 'Марс', kind: 'Планета', color: '#f87171',
+          grad: ['#fecaca', '#dc2626', '#7f1d1d'], r: 8.5, orbit: 192, speed: 0.8, angle: 4.4,
+          dist: '1.52 а.е.', year: '687 дней', temp: 'сред. -63 °C', moons: '2',
+          desc: 'Красная планета с пустынями, каньонами и вулканами.',
+          fact: 'Вулкан Олимп на Марсе почти втрое выше Эвереста.'
+        },
+        {
+          id: 'jupiter', name: 'Юпитер', kind: 'Газовый гигант', color: '#e0a96d',
+          grad: ['#fef3c7', '#d97706', '#78350f'], r: 22, orbit: 262, speed: 0.45, angle: 5.2,
+          dist: '5.20 а.е.', year: '11.9 лет', temp: '~-110 °C', moons: '95',
+          desc: 'Самая большая планета Солнечной системы.',
+          fact: 'Юпитер тяжелее всех остальных планет вместе взятых более чем в 2 раза.'
+        },
+        {
+          id: 'saturn', name: 'Сатурн', kind: 'Газовый гигант', color: '#fde047',
+          grad: ['#fef9c3', '#ca8a04', '#713f12'], r: 18, orbit: 336, speed: 0.3, angle: 2.3,
+          rings: true, dist: '9.58 а.е.', year: '29.5 лет', temp: '~-140 °C', moons: '146',
+          desc: 'Газовый гигант с яркими ледяными кольцами.',
+          fact: 'Кольца Сатурна в ширину десятки тысяч километров, но сравнительно тонкие.'
+        },
+        {
+          id: 'uranus', name: 'Уран', kind: 'Ледяной гигант', color: '#67e8f9',
+          grad: ['#cffafe', '#06b6d4', '#155e75'], r: 14, orbit: 404, speed: 0.2, angle: 0.9,
+          dist: '19.2 а.е.', year: '84 года', temp: '~-195 °C', moons: '28',
+          desc: 'Бирюзовый ледяной гигант, вращающийся как бы на боку.',
+          fact: 'Наклон оси Урана составляет около 98°.'
+        },
+        {
+          id: 'neptune', name: 'Нептун', kind: 'Ледяной гигант', color: '#60a5fa',
+          grad: ['#dbeafe', '#2563eb', '#1e3a8a'], r: 13.5, orbit: 464, speed: 0.15, angle: 3.9,
+          dist: '30.1 а.е.', year: '165 лет', temp: '~-200 °C', moons: '16',
+          desc: 'Дальняя синяя планета с мощными ветрами.',
+          fact: 'Скорость ветра на Нептуне превышает 2 000 км/ч.'
+        }
+      ];
+
+      const stars = Array.from({ length: 300 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: 0.6 + Math.random() * 1.5,
+        a: 0.3 + Math.random() * 0.7
+      }));
+
+      let w = window.innerWidth;
+      let h = window.innerHeight;
+
+      function fitCanvas() {
+        w = window.innerWidth || 800;
+        h = window.innerHeight || 600;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
-    ];
+      fitCanvas();
+      window.addEventListener('resize', fitCanvas);
 
-    // Звёздное небо и пояс астероидов между Марсом и Юпитером
-    const stars = Array.from({ length: 420 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: 0.5 + Math.random() * 1.6,
-      alpha: 0.25 + Math.random() * 0.75,
-      twinkle: 0.5 + Math.random() * 2.5
-    }));
+      let camX = 0;
+      let camY = 0;
+      let zoom = 0.95;
+      let paused = false;
+      let speed = 1;
+      let showOrbits = true;
+      let showLabels = true;
+      let selectedId = null;
 
-    const asteroids = Array.from({ length: 220 }, () => ({
-      dist: 242 + Math.random() * 26,
-      angle: Math.random() * Math.PI * 2,
-      speed: 0.52 + Math.random() * 0.14,
-      size: 0.9 + Math.random() * 1.8
-    }));
-
-    let width = 0;
-    let height = 0;
-    let dpr = 1;
-
-    function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // Состояние камеры и UI
-    let camX = 0;
-    let camY = 0;
-    let zoom = 1;
-    let paused = false;
-    let speedMult = 1;
-    let showOrbits = true;
-    let showLabels = true;
-    let selectedId = null;
-    let simTime = 0;
-
-    // Позиции объектов в мировых координатах (центр Солнца = 0, 0)
-    const worldPos = {};
-    function updatePositions(dt) {
-      if (!paused) {
-        simTime += dt * speedMult;
-      }
-      for (const b of BODIES) {
-        if (b.orbit === 0) {
-          worldPos[b.id] = { x: 0, y: 0 };
-        } else {
-          if (!paused) {
-            b.angle += b.speed * 0.24 * dt * speedMult;
+      const coords = {};
+      function stepSim(dt) {
+        for (const b of BODIES) {
+          if (!paused && b.orbit > 0) {
+            b.angle += b.speed * 0.25 * dt * speed;
           }
-          worldPos[b.id] = {
+          coords[b.id] = {
             x: Math.cos(b.angle) * b.orbit,
             y: Math.sin(b.angle) * b.orbit
           };
         }
-      }
-    }
-
-    updatePositions(0);
-
-    // Если выбран объект, плавно тянем камеру к нему
-    function updateCamera(dt) {
-      if (selectedId && worldPos[selectedId]) {
-        const target = worldPos[selectedId];
-        const lerp = 1 - Math.exp(-7 * dt);
-        camX += (target.x - camX) * lerp;
-        camY += (target.y - camY) * lerp;
-      }
-    }
-
-    function worldToScreen(wx, wy) {
-      return {
-        x: width / 2 + (wx - camX) * zoom,
-        y: height / 2 + (wy - camY) * zoom
-      };
-    }
-
-    function screenToWorld(sx, sy) {
-      return {
-        x: (sx - width / 2) / zoom + camX,
-        y: (sy - height / 2) / zoom + camY
-      };
-    }
-
-    // Панель планет внизу
-    const dock = document.getElementById('dock');
-    const infoCard = document.getElementById('infoCard');
-    const camStatus = document.getElementById('camStatus');
-
-    function selectBody(id) {
-      selectedId = id;
-      document.querySelectorAll('.planet-chip').forEach(el => {
-        el.classList.toggle('active', el.dataset.id === id);
-      });
-
-      if (!id) {
-        infoCard.classList.add('hidden');
-        camStatus.textContent = 'Свободный обзор · Колёсико: зум';
-        return;
-      }
-
-      const b = BODIES.find(item => item.id === id);
-      if (!b) return;
-
-      document.getElementById('infoType').textContent = b.type;
-      document.getElementById('infoName').textContent = b.name;
-      document.getElementById('infoDesc').textContent = b.desc;
-      document.getElementById('statDist').textContent = b.dist;
-      document.getElementById('statYear').textContent = b.year;
-      document.getElementById('statTemp').textContent = b.temp;
-      document.getElementById('statMoons').textContent = b.moons;
-      document.getElementById('factBox').textContent = '💡 ' + b.fact;
-
-      infoCard.classList.remove('hidden');
-      camStatus.textContent = `Слежение: ${b.name} · Зум ${zoom.toFixed(1)}x`;
-    }
-
-    BODIES.forEach(b => {
-      const btn = document.createElement('button');
-      btn.className = 'planet-chip';
-      btn.dataset.id = b.id;
-      btn.innerHTML = `<span class="swatch" style="background:${b.swatch}"></span><span>${b.name}</span>`;
-      btn.addEventListener('click', () => selectBody(b.id));
-      dock.appendChild(btn);
-    });
-
-    document.getElementById('closeCardBtn').addEventListener('click', () => selectBody(null));
-
-    // Управление мышкой (перетаскивание, зум, клик по планете)
-    let isDragging = false;
-    let dragMoved = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let camStartX = 0;
-    let camStartY = 0;
-
-    canvas.addEventListener('pointerdown', (e) => {
-      isDragging = true;
-      dragMoved = false;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      camStartX = camX;
-      camStartY = camY;
-      canvas.classList.add('dragging');
-    });
-
-    window.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      if (Math.hypot(dx, dy) > 4) {
-        dragMoved = true;
-        // При ручном перетаскивании отключаем жёсткий захват цели, чтобы можно было свободно уйти
-        if (selectedId) {
-          selectedId = null;
-          document.querySelectorAll('.planet-chip').forEach(el => el.classList.remove('active'));
-          camStatus.textContent = 'Свободный обзор · Колёсико: зум';
+        if (selectedId && coords[selectedId]) {
+          camX += (coords[selectedId].x - camX) * Math.min(1, dt * 8);
+          camY += (coords[selectedId].y - camY) * Math.min(1, dt * 8);
         }
       }
-      camX = camStartX - dx / zoom;
-      camY = camStartY - dy / zoom;
-    });
+      stepSim(0);
 
-    window.addEventListener('pointerup', (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      canvas.classList.remove('dragging');
+      function toScreen(wx, wy) {
+        return {
+          x: w * 0.5 + (wx - camX) * zoom,
+          y: h * 0.5 + (wy - camY) * zoom
+        };
+      }
 
-      if (!dragMoved) {
-        const w = screenToWorld(e.clientX, e.clientY);
-        // Проверяем попадание по планетам (с небольшим запасом для удобного клика)
-        let clicked = null;
-        for (let i = BODIES.length - 1; i >= 0; i--) {
-          const b = BODIES[i];
-          const pos = worldPos[b.id];
-          const hitR = Math.max(b.radius + 6 / zoom, 10 / zoom);
-          if (Math.hypot(w.x - pos.x, w.y - pos.y) <= hitR) {
-            clicked = b.id;
-            break;
+      function toWorld(sx, sy) {
+        return {
+          x: (sx - w * 0.5) / zoom + camX,
+          y: (sy - h * 0.5) / zoom + camY
+        };
+      }
+
+      // UI
+      const card = document.getElementById('card');
+      const statusText = document.getElementById('statusText');
+      const planetList = document.getElementById('planetList');
+
+      function selectBody(id) {
+        selectedId = id;
+        document.querySelectorAll('.p-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.id === id);
+        });
+        if (!id) {
+          card.classList.remove('open');
+          statusText.textContent = 'ЛКМ — тянуть · Колёсико — зум · Клик по планете — фокус';
+          return;
+        }
+        const b = BODIES.find(x => x.id === id);
+        if (!b) return;
+        document.getElementById('cKind').textContent = b.kind;
+        document.getElementById('cTitle').textContent = b.name;
+        document.getElementById('cDesc').textContent = b.desc;
+        document.getElementById('cDist').textContent = b.dist;
+        document.getElementById('cYear').textContent = b.year;
+        document.getElementById('cTemp').textContent = b.temp;
+        document.getElementById('cMoons').textContent = b.moons;
+        document.getElementById('cFact').textContent = '💡 ' + b.fact;
+        card.classList.add('open');
+        statusText.textContent = `Фокус: ${b.name} · Зум ${zoom.toFixed(1)}x`;
+      }
+
+      BODIES.forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = 'p-btn';
+        btn.dataset.id = b.id;
+        btn.innerHTML = `<span class="dot" style="background:${b.color}"></span>${b.name}`;
+        btn.addEventListener('click', () => {
+          selectBody(b.id);
+          if (zoom < 1.25) zoom = 1.35;
+        });
+        planetList.appendChild(btn);
+      });
+
+      document.getElementById('btnCloseCard').addEventListener('click', () => selectBody(null));
+
+      document.getElementById('btnPause').addEventListener('click', (e) => {
+        paused = !paused;
+        e.currentTarget.textContent = paused ? '▶ Пуск' : '⏸ Пауза';
+        e.currentTarget.classList.toggle('active', paused);
+      });
+
+      document.querySelectorAll('.spd').forEach(btn => {
+        btn.addEventListener('click', () => {
+          speed = Number(btn.dataset.spd);
+          paused = false;
+          const pBtn = document.getElementById('btnPause');
+          pBtn.textContent = '⏸ Пауза';
+          pBtn.classList.remove('active');
+          document.querySelectorAll('.spd').forEach(x => x.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      document.getElementById('btnOrbits').addEventListener('click', (e) => {
+        showOrbits = !showOrbits;
+        e.currentTarget.classList.toggle('active', showOrbits);
+      });
+
+      document.getElementById('btnLabels').addEventListener('click', (e) => {
+        showLabels = !showLabels;
+        e.currentTarget.classList.toggle('active', showLabels);
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        camX = 0;
+        camY = 0;
+        zoom = 0.95;
+        selectBody(null);
+      });
+
+      // Мышь / тач
+      let dragging = false;
+      let moved = false;
+      let sx = 0, sy = 0, scx = 0, scy = 0;
+
+      canvas.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        moved = false;
+        sx = e.clientX;
+        sy = e.clientY;
+        scx = camX;
+        scy = camY;
+        canvas.classList.add('grabbing');
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - sx;
+        const dy = e.clientY - sy;
+        if (Math.hypot(dx, dy) > 4) {
+          moved = true;
+          if (selectedId) {
+            selectedId = null;
+            document.querySelectorAll('.p-btn').forEach(btn => btn.classList.remove('active'));
+            statusText.textContent = 'Свободный обзор · Колёсико — зум';
           }
         }
-        if (clicked) {
-          selectBody(clicked);
-          if (zoom < 1.35) zoom = 1.45;
-        }
-      }
-    });
-
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.12 : 0.89;
-      zoom = Math.max(0.35, Math.min(4.5, zoom * factor));
-      if (selectedId) {
-        const b = BODIES.find(item => item.id === selectedId);
-        camStatus.textContent = `Слежение: ${b ? b.name : ''} · Зум ${zoom.toFixed(1)}x`;
-      }
-    }, { passive: false });
-
-    // Кнопки панели управления
-    const pauseBtn = document.getElementById('pauseBtn');
-    pauseBtn.addEventListener('click', () => {
-      paused = !paused;
-      pauseBtn.textContent = paused ? '▶ Пуск' : '⏸ Пауза';
-      pauseBtn.classList.toggle('active', paused);
-    });
-
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        speedMult = Number(btn.dataset.speed);
-        paused = false;
-        pauseBtn.textContent = '⏸ Пауза';
-        pauseBtn.classList.remove('active');
-        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        camX = scx - dx / zoom;
+        camY = scy - dy / zoom;
       });
-    });
 
-    const orbitsBtn = document.getElementById('orbitsBtn');
-    orbitsBtn.addEventListener('click', () => {
-      showOrbits = !showOrbits;
-      orbitsBtn.classList.toggle('active', showOrbits);
-    });
+      window.addEventListener('pointerup', (e) => {
+        if (!dragging) return;
+        dragging = false;
+        canvas.classList.remove('grabbing');
+        if (!moved) {
+          const wp = toWorld(e.clientX, e.clientY);
+          for (let i = BODIES.length - 1; i >= 0; i--) {
+            const b = BODIES[i];
+            const c = coords[b.id];
+            const hit = Math.max(b.r + 8 / zoom, 12 / zoom);
+            if (Math.hypot(wp.x - c.x, wp.y - c.y) <= hit) {
+              selectBody(b.id);
+              if (zoom < 1.25) zoom = 1.35;
+              break;
+            }
+          }
+        }
+      });
 
-    const labelsBtn = document.getElementById('labelsBtn');
-    labelsBtn.addEventListener('click', () => {
-      showLabels = !showLabels;
-      labelsBtn.classList.toggle('active', showLabels);
-    });
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        zoom = Math.max(0.35, Math.min(4, zoom * (e.deltaY < 0 ? 1.12 : 0.89)));
+      }, { passive: false });
 
-    document.getElementById('resetViewBtn').addEventListener('click', () => {
-      zoom = 1;
-      camX = 0;
-      camY = 0;
-      selectBody(null);
-    });
+      function render() {
+        ctx.fillStyle = '#040711';
+        ctx.fillRect(0, 0, w, h);
 
-    function drawBackground() {
-      const grad = ctx.createRadialGradient(
-        width * 0.5, height * 0.45, 20,
-        width * 0.5, height * 0.5, Math.max(width, height) * 0.75
-      );
-      grad.addColorStop(0, '#0d1630');
-      grad.addColorStop(0.55, '#070b1a');
-      grad.addColorStop(1, '#03050c');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
-
-      for (const s of stars) {
-        const twinkle = 0.75 + 0.25 * Math.sin(simTime * s.twinkle + s.x * 100);
-        ctx.fillStyle = `rgba(226, 236, 255, ${s.alpha * twinkle})`;
-        ctx.beginPath();
-        ctx.arc(s.x * width, s.y * height, s.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function drawOrbitsAndAsteroids() {
-      const center = worldToScreen(0, 0);
-
-      if (showOrbits) {
-        for (const b of BODIES) {
-          if (b.orbit <= 0) continue;
-          const r = b.orbit * zoom;
-          ctx.save();
+        for (const s of stars) {
+          ctx.fillStyle = `rgba(226, 232, 240, ${s.a})`;
           ctx.beginPath();
-          ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
-          ctx.strokeStyle = b.id === selectedId
-            ? 'rgba(94, 234, 212, 0.55)'
-            : 'rgba(148, 187, 255, 0.14)';
-          ctx.lineWidth = b.id === selectedId ? 1.8 : 1;
-          ctx.stroke();
-          ctx.restore();
+          ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const sunPos = toScreen(0, 0);
+        if (showOrbits) {
+          for (const b of BODIES) {
+            if (!b.orbit) continue;
+            ctx.strokeStyle = b.id === selectedId
+              ? 'rgba(94, 234, 212, 0.55)'
+              : 'rgba(148, 163, 184, 0.16)';
+            ctx.lineWidth = b.id === selectedId ? 1.8 : 1;
+            ctx.beginPath();
+            ctx.arc(sunPos.x, sunPos.y, b.orbit * zoom, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        for (const b of BODIES) {
+          const c = coords[b.id];
+          const p = toScreen(c.x, c.y);
+          const r = Math.max(3, b.r * zoom);
+
+          if (b.id === 'sun') {
+            const glow = ctx.createRadialGradient(p.x, p.y, r * 0.4, p.x, p.y, r * 2.5);
+            glow.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+            glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (b.rings) {
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.65)';
+            ctx.lineWidth = Math.max(2, 4 * zoom);
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, r * 2.0, r * 0.55, -0.3, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          const g = ctx.createRadialGradient(p.x - r * 0.3, p.y - r * 0.3, r * 0.1, p.x, p.y, r);
+          g.addColorStop(0, b.grad[0]);
+          g.addColorStop(0.6, b.grad[1]);
+          g.addColorStop(1, b.grad[2]);
+
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (b.id === selectedId) {
+            ctx.strokeStyle = '#5eead4';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, r + 6, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          if (showLabels) {
+            ctx.font = '700 12px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = b.id === selectedId ? '#5eead4' : '#e2e8f0';
+            ctx.fillText(b.name, p.x, p.y + r + 14);
+          }
         }
       }
 
-      // Пояс астероидов
-      for (const a of asteroids) {
-        const ang = a.angle + simTime * a.speed * 0.08;
-        const wx = Math.cos(ang) * a.dist;
-        const wy = Math.sin(ang) * a.dist;
-        const sp = worldToScreen(wx, wy);
-        ctx.fillStyle = 'rgba(180, 190, 215, 0.45)';
-        ctx.beginPath();
-        ctx.arc(sp.x, sp.y, Math.max(0.7, a.size * zoom), 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function drawBody(b) {
-      const pos = worldPos[b.id];
-      const sp = worldToScreen(pos.x, pos.y);
-      const r = Math.max(2.5, b.radius * zoom);
-
-      ctx.save();
-
-      // Свечение Солнца или атмосферы
-      if (b.id === 'sun') {
-        const pulse = 1 + 0.03 * Math.sin(simTime * 3.5);
-        const halo = ctx.createRadialGradient(sp.x, sp.y, r * 0.6, sp.x, sp.y, r * 2.8 * pulse);
-        halo.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
-        halo.addColorStop(0.5, 'rgba(234, 88, 12, 0.14)');
-        halo.addColorStop(1, 'rgba(234, 88, 12, 0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(sp.x, sp.y, r * 2.8 * pulse, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (b.atmosphere) {
-        ctx.fillStyle = b.atmosphere;
-        ctx.beginPath();
-        ctx.arc(sp.x, sp.y, r * 1.24, 0, Math.PI * 2);
-        ctx.fill();
+      let prev = performance.now();
+      function frame(now) {
+        const dt = Math.min(0.05, (now - prev) / 1000);
+        prev = now;
+        stepSim(dt);
+        render();
+        requestAnimationFrame(frame);
       }
 
-      // Кольца Сатурна (задняя дуга)
-      if (b.rings) {
-        ctx.save();
-        ctx.translate(sp.x, sp.y);
-        ctx.rotate(-0.32);
-        ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
-        ctx.lineWidth = Math.max(2, 5 * zoom);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 2.05, r * 0.56, 0, Math.PI, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Тело планеты / звезды с объёмным градиентом
-      const g = ctx.createRadialGradient(
-        sp.x - r * 0.35,
-        sp.y - r * 0.35,
-        r * 0.1,
-        sp.x,
-        sp.y,
-        r
-      );
-      g.addColorStop(0, b.colors[0]);
-      g.addColorStop(0.55, b.colors[1]);
-      g.addColorStop(1, b.colors[2]);
-
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Полосы Юпитера
-      if (b.bands && r > 6) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = 'rgba(120, 53, 15, 0.35)';
-        ctx.fillRect(sp.x - r, sp.y - r * 0.35, r * 2, r * 0.2);
-        ctx.fillRect(sp.x - r, sp.y + r * 0.15, r * 2, r * 0.22);
-        ctx.restore();
-      }
-
-      // Кольца Сатурна (передняя дуга поверх планеты)
-      if (b.rings) {
-        ctx.save();
-        ctx.translate(sp.x, sp.y);
-        ctx.rotate(-0.32);
-        ctx.strokeStyle = 'rgba(253, 224, 71, 0.72)';
-        ctx.lineWidth = Math.max(2, 5 * zoom);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 2.05, r * 0.56, 0, 0, Math.PI);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Луна у Земли
-      if (b.hasMoon) {
-        const moonDist = (b.radius + 11) * zoom;
-        const moonAng = simTime * 2.6;
-        const mx = sp.x + Math.cos(moonAng) * moonDist;
-        const my = sp.y + Math.sin(moonAng) * moonDist;
-        ctx.fillStyle = '#cbd5e1';
-        ctx.beginPath();
-        ctx.arc(mx, my, Math.max(1.5, 2.6 * zoom), 0, Math.
+      render();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
