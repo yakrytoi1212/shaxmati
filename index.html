@@ -1,223 +1,572 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шахматы: Танк-Ракета Путин vs Игрок</title>
-    <!-- Подключаем надежную шахматную библиотеку для правильных ходов всех фигур -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #12121f, #221f3b);
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 15px;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Неоновый Рефлекс — Мини-игра</title>
+  <style>
+    :root {
+      --bg: #090c16;
+      --panel: rgba(18, 24, 43, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f3f6ff;
+      --muted: #8f9bb8;
+      --accent: #00f5d4;
+      --pink: #ff2a85;
+      --gold: #ffd166;
+    }
 
-        h1 {
-            margin: 5px 0;
-            color: #ffcc00;
-            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
-            font-size: 1.5rem;
-            text-align: center;
-        }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
 
-        #event-alert {
-            font-size: 0.95rem;
-            color: #ff4757;
-            min-height: 20px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 2px;
-        }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #17203d 0%, var(--bg) 70%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
 
-        #status {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #00ffcc;
-            text-align: center;
-        }
+    .hud {
+      width: 100%;
+      max-width: 780px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
 
-        .main-layout {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      backdrop-filter: blur(10px);
+    }
 
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(35, 35, 55, 0.9);
-            padding: 15px;
-            border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-        }
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
 
-        #board {
-            display: grid;
-            grid-template-columns: repeat(8, 56px);
-            grid-template-rows: repeat(8, 56px);
-            border: 4px solid #48486d;
-            border-radius: 6px;
-            overflow: hidden;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
-        }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
 
-        .square {
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            transition: background 0.1s;
-        }
+    .combo-val { color: var(--accent); }
+    .best-val { color: var(--gold); }
+    .lives-val { color: var(--pink); }
 
-        .square.light { background-color: #ebecd0; color: #000; }
-        .square.dark { background-color: #739552; color: #000; }
-        .square.selected { background-color: #baca2b !important; }
-        .square.possible-move::after {
-            content: '';
-            width: 16px;
-            height: 16px;
-            background-color: rgba(0, 0, 0, 0.3);
-            border-radius: 50%;
-            position: absolute;
-        }
+    .arena-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 780px;
+      height: 480px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 245, 212, 0.25);
+      box-shadow: 0 0 40px rgba(0, 245, 212, 0.08), inset 0 0 60px rgba(0, 0, 0, 0.5);
+      background: #0c1020;
+    }
 
-        .cards-panel {
-            background: rgba(25, 25, 42, 0.95);
-            padding: 15px;
-            border-radius: 14px;
-            width: 250px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 2px solid #ffcc00;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
 
-        .cards-panel h3 {
-            margin: 0 0 5px 0;
-            color: #ffcc00;
-            text-align: center;
-            font-size: 1.1rem;
-        }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 12, 22, 0.82);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      transition: opacity 0.2s ease;
+    }
 
-        .card-item {
-            background: linear-gradient(135deg, #f5f6fa, #dcdde1);
-            color: #2f3640;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #718093;
-        }
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-        .card-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(255,204,0,0.5);
-            border-color: #ffcc00;
-        }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, var(--accent), #5e60ce, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-        .card-title {
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-bottom: 2px;
-        }
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      max-width: 460px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
 
-        .card-desc {
-            font-size: 0.75rem;
-            color: #57606f;
-        }
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: var(--text);
+    }
 
-        .controls {
-            margin-top: 12px;
-        }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
 
-        button {
-            background: linear-gradient(135deg, #6c5ce7, #4834d4);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);
-        }
+    .btn {
+      background: linear-gradient(135deg, var(--accent), #00bbf9);
+      color: #071018;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 28px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(0, 245, 212, 0.3);
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
 
-        button:hover {
-            background: linear-gradient(135deg, #5849be, #3c2aae);
-        }
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
 
-        #boss-speech {
-            background: rgba(255, 71, 87, 0.2);
-            border: 1px solid #ff4757;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            color: #ff6b81;
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.95rem;
-            max-width: 440px;
-            text-shadow: 0 0 5px rgba(255, 71, 87, 0.5);
-        }
-    </style>
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle-sound {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-
-    <h1>🇷🇺 Шахматы: Путин (Танк-Ракета) vs Игрок ♟️</h1>
-    <div id="event-alert">Событие: Битва началась!</div>
-    <div id="status">Ход белых (Вы)</div>
-
-    <div class="main-layout">
-        <div class="game-container">
-            <div id="board"></div>
-            <div id="boss-speech">💬 Путин: "КОЧ И ГОЛДА! Сделай свой ход!"</div>
-            <div class="controls">
-                <button onclick="resetGame()">Новая игра</button>
-            </div>
-        </div>
-
-        <div class="cards-panel">
-            <h3>🎴 Карты (как в Дураке)</h3>
-            <div class="card-desc" style="text-align: center; margin-bottom: 4px;">Нажмите в свой ход:</div>
-            <div id="cards-container"></div>
-        </div>
+  <div class="hud">
+    <div class="stat">
+      <div class="stat-label">Очки</div>
+      <div class="stat-value" id="score">0</div>
     </div>
+    <div class="stat">
+      <div class="stat-label">Комбо</div>
+      <div class="stat-value combo-val" id="combo">x1</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Жизни</div>
+      <div class="stat-value lives-val" id="lives">❤️❤️❤️</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Рекорд</div>
+      <div class="stat-value best-val" id="best">0</div>
+    </div>
+  </div>
 
-    <script>
-        let game = new Chess(); // Классический шахматный движок (правильные правила для всех фигур)
-        let selectedSquare = null;
-        let possibleMoves = [];
+  <div class="arena-wrap">
+    <canvas id="game" width="780" height="480"></canvas>
 
-        // Символы фигур (Черный король 'k' заменен на Путина-Танк-Ракету 🚀)
-        const pieceSymbols = {
-            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '🚀',
-            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
-        };
+    <div class="overlay" id="overlay">
+      <h1 id="overlayTitle">НЕОНОВЫЙ РЕФЛЕКС</h1>
+      <p id="overlayDesc">
+        Кликай по шарам до того, как они исчезнут. Не мажь мимо и не давай им сгорать! С каждым уровнем темп растёт.
+      </p>
+      <div class="legend">
+        <span><i class="dot" style="background:#00f5d4"></i>Обычный (+10)</span>
+        <span><i class="dot" style="background:#ff2a85"></i>Шустрый (+25)</span>
+        <span><i class="dot" style="background:#ffd166"></i>Бонус: +1 жизнь и +50</span>
+      </div>
+      <button class="btn" id="startBtn">Погнали</button>
+    </div>
+  </div>
 
-        // Карты игрока
-        let playerHand = [
-            { id: 1, title: "🚀 Ракетный удар", desc: "Уничтожает случайную черную фигуру противника.", type: "strike" },
-            { id: 2, title: "🛡️ Укрепление", desc: "Дает бонус к защите вашей позиции.", type: "shield" }
-        ];
+  <div class="controls">
+    <span>Совет: серия попаданий качает множитель комбо</span>
+    <button class="toggle-sound" id="soundBtn">Звук: ВКЛ</button>
+  </div>
 
-        function renderBoard() {
-            let boardElement = document.getElementById('board');
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const comboEl = document.getElementById('combo');
+    const livesEl = document.getElementById('lives');
+    const bestEl = document.getElementById('best');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayDesc = document.getElementById('overlayDesc');
+    const startBtn = document.getElementById('startBtn');
+    const soundBtn = document.getElementById('soundBtn');
+
+    let bestScore = Number(localStorage.getItem('neonReflexBest') || 0);
+    bestEl.textContent = bestScore;
+
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playTone(freq, duration = 0.09, type = 'sine', gainVal = 0.08) {
+      if (!soundEnabled) return;
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    soundBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundBtn.textContent = `Звук: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+    });
+
+    let running = false;
+    let score = 0;
+    let streak = 0;
+    let lives = 3;
+    let orbs = [];
+    let particles = [];
+    let popups = [];
+    let spawnTimer = 0;
+    let elapsed = 0;
+    let lastTime = 0;
+
+    function getMultiplier() {
+      return Math.min(8, 1 + Math.floor(streak / 5));
+    }
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      comboEl.textContent = `x${getMultiplier()}`;
+      livesEl.textContent = lives > 0 ? '❤️'.repeat(lives) : '💀';
+      if (score > bestScore) {
+        bestScore = score;
+        bestEl.textContent = bestScore;
+        localStorage.setItem('neonReflexBest', String(bestScore));
+      }
+    }
+
+    function spawnOrb() {
+      const roll = Math.random();
+      let kind = 'normal';
+      if (roll > 0.88 && lives < 4) kind = 'bonus';
+      else if (roll > 0.62) kind = 'fast';
+
+      const difficulty = 1 + elapsed / 25;
+      const radius = kind === 'fast' ? 20 : kind === 'bonus' ? 23 : 28;
+      const margin = radius + 24;
+      const x = margin + Math.random() * (canvas.width - margin * 2);
+      const y = margin + Math.random() * (canvas.height - margin * 2);
+
+      const angle = Math.random() * Math.PI * 2;
+      const baseSpeed = kind === 'fast' ? 145 : kind === 'bonus' ? 95 : 65;
+      const speed = baseSpeed * Math.min(2.2, difficulty);
+
+      const maxLife = kind === 'fast' ? 2.1 : 3.2;
+
+      const palette = {
+        normal: { color: '#00f5d4', points: 10 },
+        fast:   { color: '#ff2a85', points: 25 },
+        bonus:  { color: '#ffd166', points: 50 }
+      }[kind];
+
+      orbs.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius,
+        kind,
+        color: palette.color,
+        points: palette.points,
+        life: maxLife,
+        maxLife
+      });
+    }
+
+    function addBurst(x, y, color, count = 14) {
+      for (let i = 0; i < count; i++) {
+        const a = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+        const spd = 60 + Math.random() * 180;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * spd,
+          vy: Math.sin(a) * spd,
+          life: 0.45 + Math.random() * 0.25,
+          maxLife: 0.7,
+          color,
+          size: 2.5 + Math.random() * 3
+        });
+      }
+    }
+
+    function addPopup(x, y, text, color) {
+      popups.push({ x, y, text, color, life: 0.75 });
+    }
+
+    function loseLife(x, y, reasonText) {
+      lives -= 1;
+      streak = 0;
+      playTone(150, 0.18, 'sawtooth', 0.09);
+      addPopup(x, y, reasonText, '#ff4d6d');
+      updateHud();
+      if (lives <= 0) {
+        gameOver();
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      streak = 0;
+      lives = 3;
+      orbs = [];
+      particles = [];
+      popups = [];
+      spawnTimer = 0.2;
+      elapsed = 0;
+      running = true;
+      overlay.classList.add('hidden');
+      updateHud();
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function gameOver() {
+      running = false;
+      overlayTitle.textContent = 'ИГРА ОКОНЧЕНА';
+      overlayDesc.textContent = `Твой счёт: ${score} · Лучший результат: ${bestScore}. Попробуешь побить рекорд?`;
+      startBtn.textContent = 'Сыграть ещё раз';
+      overlay.classList.remove('hidden');
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!running) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const px = (e.clientX - rect.left) * scaleX;
+      const py = (e.clientY - rect.top) * scaleY;
+
+      let hitIndex = -1;
+      for (let i = orbs.length - 1; i >= 0; i--) {
+        const o = orbs[i];
+        const dist = Math.hypot(px - o.x, py - o.y);
+        if (dist <= o.radius + 6) {
+          hitIndex = i;
+          break;
+        }
+      }
+
+      if (hitIndex !== -1) {
+        const hit = orbs[hitIndex];
+        orbs.splice(hitIndex, 1);
+        streak += 1;
+        const mult = getMultiplier();
+        const gained = hit.points * mult;
+        score += gained;
+
+        if (hit.kind === 'bonus') {
+          lives = Math.min(4, lives + 1);
+          playTone(780, 0.14, 'triangle', 0.1);
+          addPopup(hit.x, hit.y, `+${gained}  +1 ❤️`, hit.color);
+        } else {
+          playTone(360 + Math.min(500, streak * 18), 0.08, 'sine', 0.075);
+          addPopup(hit.x, hit.y, `+${gained}`, hit.color);
+        }
+
+        addBurst(hit.x, hit.y, hit.color, hit.kind === 'bonus' ? 22 : 13);
+        updateHud();
+      } else {
+        addBurst(px, py, '#8f9bb8', 6);
+        loseLife(px, py, 'МИМО!');
+      }
+    });
+
+    function update(dt) {
+      elapsed += dt;
+      spawnTimer -= dt;
+      const spawnInterval = Math.max(0.36, 1.05 - elapsed * 0.022);
+      if (spawnTimer <= 0) {
+        spawnOrb();
+        spawnTimer = spawnInterval;
+      }
+
+      for (let i = orbs.length - 1; i >= 0; i--) {
+        const o = orbs[i];
+        o.x += o.vx * dt;
+        o.y += o.vy * dt;
+        o.life -= dt;
+
+        if (o.x - o.radius < 0) { o.x = o.radius; o.vx *= -1; }
+        if (o.x + o.radius > canvas.width) { o.x = canvas.width - o.radius; o.vx *= -1; }
+        if (o.y - o.radius < 0) { o.y = o.radius; o.vy *= -1; }
+        if (o.y + o.radius > canvas.height) { o.y = canvas.height - o.radius; o.vy *= -1; }
+
+        if (o.life <= 0) {
+          const ox = o.x, oy = o.y, kind = o.kind;
+          orbs.splice(i, 1);
+          if (kind !== 'bonus') {
+            loseLife(ox, oy, 'УШЁЛ!');
+            if (!running) return;
+          }
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.life -= dt;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const pop = popups[i];
+        pop.y -= 36 * dt;
+        pop.life -= dt;
+        if (pop.life <= 0) popups.splice(i, 1);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Лёгкая сетка на фоне
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Шары
+      for (const o of orbs) {
+        const ratio = Math.max(0, o.life / o.maxLife);
+
+        ctx.save();
+        ctx.shadowColor = o.color;
+        ctx.shadowBlur = 18;
+
+        // Кольцо таймера жизни
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.radius + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio);
+        ctx.strokeStyle = o.color;
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Тело шара
+        ctx.globalAlpha = 0.92;
+        ctx.fillStyle = o.color;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Внутренний блик
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.beginPath();
+        ctx.arc(o.x - o.radius * 0.28, o.y - o.radius * 0.28, o.radius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Искры
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Всплывающие очки
+      for (const pop of popups) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, pop.life * 1.6);
+        ctx.font = '800 16px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = pop.color;
+        ctx.fillText(pop.text, pop.x, pop.y);
+        ctx.restore();
+      }
+    }
+
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    draw();
+    startBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
