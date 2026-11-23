@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>СУПЕР ПОП-КЛИКЕР — Roblox Style</title>
+  <title>Космическая Симуляция — Солнечная система</title>
   <style>
     :root {
-      --bg1: #181038;
-      --bg2: #0d1b3e;
-      --card: rgba(25, 22, 58, 0.86);
-      --card-hover: rgba(42, 36, 92, 0.95);
-      --border: rgba(255, 255, 255, 0.14);
-      --text: #ffffff;
-      --muted: #b4b0d9;
-      --yellow: #ffd426;
-      --pink: #ff3b8d;
-      --cyan: #18f2e5;
-      --green: #38ef7d;
-      --purple: #a855f7;
+      --bg: #050814;
+      --panel: rgba(11, 17, 36, 0.78);
+      --panel-strong: rgba(13, 20, 42, 0.92);
+      --border: rgba(148, 187, 255, 0.16);
+      --text: #f4f7ff;
+      --muted: #98a6c9;
+      --accent: #5eead4;
+      --accent-2: #60a5fa;
+      --warn: #fbbf24;
     }
 
     * {
@@ -25,836 +22,894 @@
       user-select: none;
     }
 
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
-      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
       color: var(--text);
-      background:
-        radial-gradient(circle at 15% 15%, rgba(255, 59, 141, 0.25), transparent 40%),
-        radial-gradient(circle at 85% 20%, rgba(24, 242, 229, 0.22), transparent 42%),
-        linear-gradient(155deg, var(--bg1), var(--bg2));
-      padding: 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     }
 
-    .topbar {
-      max-width: 1180px;
-      margin: 0 auto 16px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
     }
 
-    .stat-box {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-bottom-width: 5px;
-      border-radius: 18px;
-      padding: 12px 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    canvas.dragging {
+      cursor: grabbing;
     }
 
-    .stat-label {
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-
-    .stat-val {
-      font-size: 24px;
-      font-weight: 900;
-      margin-top: 2px;
-    }
-
-    .val-coins { color: var(--yellow); }
-    .val-dps { color: var(--cyan); }
-    .val-rebirth { color: var(--pink); }
-    .val-luck { color: var(--green); }
-
-    .layout {
-      max-width: 1180px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1.05fr 1.25fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    /* Левая колонка: Арена кликов и персонаж */
-    .click-stage {
-      position: relative;
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-bottom-width: 6px;
-      border-radius: 26px;
-      padding: 24px;
-      text-align: center;
-      overflow: hidden;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-    }
-
-    .stage-header {
+    /* Верхняя панель управления */
+    .top-bar {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      right: 14px;
       display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .badge {
-      background: rgba(255, 255, 255, 0.09);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .fever-banner {
-      display: none;
-      margin: 8px auto 12px;
-      padding: 8px 16px;
-      border-radius: 14px;
-      background: linear-gradient(90deg, #ff3b8d, #ffd426, #ff3b8d);
-      color: #150b24;
-      font-weight: 900;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      animation: pulse 0.7s infinite alternate;
-    }
-
-    .fever-banner.active {
-      display: inline-block;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.98); }
-      to { transform: scale(1.03); }
-    }
-
-    .pet-arena {
-      position: relative;
-      height: 330px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: 6px 0 14px;
-    }
-
-    /* Весёлый персонаж в стиле Roblox-блоба */
-    .character-btn {
-      position: relative;
-      width: 190px;
-      height: 190px;
-      border-radius: 44px;
-      border: 4px solid rgba(255, 255, 255, 0.35);
-      border-bottom-width: 10px;
-      background: linear-gradient(145deg, #ff6ec7, #7873f5);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow:
-        0 18px 35px rgba(120, 115, 245, 0.45),
-        inset 0 8px 16px rgba(255, 255, 255, 0.35);
-      transition: transform 0.08s ease;
-    }
-
-    .character-btn:hover {
-      filter: brightness(1.05);
-    }
-
-    .character-btn:active,
-    .character-btn.squish {
-      transform: scale(0.91, 1.07);
-    }
-
-    /* Весёлая шапочка персонажа */
-    .hat {
-      position: absolute;
-      top: -26px;
-      width: 96px;
-      height: 30px;
-      background: var(--yellow);
-      border: 3px solid #1e163d;
-      border-radius: 16px 16px 6px 6px;
-      transform: rotate(-7deg);
-    }
-
-    .hat::after {
-      content: "";
-      position: absolute;
-      top: -12px;
-      left: 36px;
-      width: 20px;
-      height: 14px;
-      background: var(--pink);
-      border: 3px solid #1e163d;
-      border-radius: 50%;
-    }
-
-    .face {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .eyes {
-      display: flex;
-      gap: 28px;
-    }
-
-    .eye {
-      width: 26px;
-      height: 32px;
-      background: #141029;
-      border-radius: 50%;
-      position: relative;
-      transition: transform 0.1s ease, height 0.1s ease;
-    }
-
-    .eye::after {
-      content: "";
-      position: absolute;
-      top: 5px;
-      left: 6px;
-      width: 9px;
-      height: 9px;
-      background: #fff;
-      border-radius: 50%;
-    }
-
-    .mouth {
-      width: 44px;
-      height: 22px;
-      background: #141029;
-      border-radius: 6px 6px 24px 24px;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.1s ease;
-    }
-
-    .tongue {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 22px;
-      height: 12px;
-      background: #ff5d8f;
-      border-radius: 10px 10px 0 0;
-    }
-
-    .character-btn.excited .mouth {
-      transform: scale(1.22);
-    }
-
-    .character-name {
-      margin-top: 14px;
-      font-weight: 900;
-      font-size: 16px;
-      letter-spacing: 0.03em;
-    }
-
-    .character-phrase {
-      font-size: 13px;
-      color: var(--cyan);
-      min-height: 18px;
-      margin-top: 2px;
-      font-weight: 700;
-    }
-
-    .floating-text {
-      position: absolute;
       pointer-events: none;
-      font-weight: 900;
-      font-size: 20px;
-      text-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
-      animation: floatUp 0.75s ease-out forwards;
       z-index: 10;
     }
 
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translate(-50%, 0) scale(0.85); }
-      40% { opacity: 1; transform: translate(-50%, -26px) scale(1.12); }
-      100% { opacity: 0; transform: translate(-50%, -62px) scale(0.95); }
-    }
-
-    .action-row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-rebirth {
-      background: linear-gradient(135deg, #ff3b8d, #a855f7);
-      color: #fff;
-      border: none;
-      border-bottom: 4px solid #6d1b7b;
-      border-radius: 16px;
-      padding: 12px 20px;
-      font-weight: 900;
-      font-size: 14px;
-      cursor: pointer;
-      transition: transform 0.1s ease, filter 0.1s ease;
-    }
-
-    .btn-rebirth:hover:not(:disabled) {
-      transform: translateY(-2px);
-      filter: brightness(1.08);
-    }
-
-    .btn-rebirth:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .btn-reset {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--muted);
+    .glass {
+      pointer-events: auto;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 12px 14px;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
     }
 
-    /* Правая колонка: Ветка прокачки */
-    .upgrades-panel {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-bottom-width: 6px;
-      border-radius: 26px;
-      padding: 20px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    .brand {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+    .brand-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff59d, #f59e0b);
+      box-shadow: 0 0 14px #fbbf24;
     }
 
-    .tab-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 2px solid transparent;
-      color: var(--muted);
-      padding: 10px 8px;
-      border-radius: 14px;
+    .brand-title {
       font-weight: 800;
-      font-size: 13px;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls {
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .tab-btn.active {
-      background: rgba(24, 242, 229, 0.14);
-      border-color: var(--cyan);
-      color: #fff;
+    button:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(94, 234, 212, 0.4);
     }
 
-    .branch-desc {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 0 0 14px;
+    button.active {
+      background: rgba(94, 234, 212, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
-    .upgrade-list {
+    .divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 2px;
+    }
+
+    /* Нижняя полоса быстрого выбора планет */
+    .dock-wrap {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: calc(100% - 24px);
+      z-index: 10;
+    }
+
+    .dock {
+      padding: 7px 10px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 440px;
-      overflow-y: auto;
-      padding-right: 4px;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
 
-    .upg-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1.5px solid var(--border);
-      border-radius: 18px;
-      padding: 12px 14px;
-      transition: transform 0.1s ease, background 0.15s ease;
+    .dock::-webkit-scrollbar {
+      display: none;
     }
 
-    .upg-card:hover {
-      background: var(--card-hover);
-      transform: translateX(2px);
-    }
-
-    .upg-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .upg-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.08);
+    .planet-chip {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 24px;
+      gap: 7px;
+      white-space: nowrap;
+      padding: 7px 12px;
+      border-radius: 12px;
+    }
+
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .upg-title {
-      font-weight: 900;
-      font-size: 15px;
+    /* Правая карточка с информацией о планете */
+    .info-card {
+      position: fixed;
+      top: 78px;
+      right: 14px;
+      width: 330px;
+      max-width: calc(100% - 28px);
+      background: var(--panel-strong);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+      z-index: 10;
+      transform: translateX(0);
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
-    .upg-lvl {
-      font-size: 12px;
-      color: var(--cyan);
+    .info-card.hidden {
+      opacity: 0;
+      transform: translateX(24px);
+      pointer-events: none;
+    }
+
+    .info-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .info-type {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
       font-weight: 800;
-      margin-left: 6px;
     }
 
-    .upg-sub {
+    .info-name {
+      margin: 2px 0 0;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .close-btn {
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .info-desc {
+      margin: 0 0 14px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #cbd5ee;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .mini-stat {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 9px 11px;
+    }
+
+    .mini-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .mini-val {
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 3px;
+      color: var(--text);
+    }
+
+    .fact-box {
+      background: rgba(94, 234, 212, 0.08);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #dffaf4;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 66px;
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 12px;
       color: var(--muted);
-      margin-top: 2px;
+      background: rgba(5, 8, 20, 0.65);
+      padding: 5px 12px;
+      border-radius: 999px;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 9;
     }
 
-    .btn-buy {
-      background: linear-gradient(135deg, var(--yellow), #ff9f1c);
-      color: #19102b;
-      border: none;
-      border-bottom: 4px solid #b86b00;
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-weight: 900;
-      font-size: 13px;
-      cursor: pointer;
-      min-width: 112px;
-      transition: transform 0.08s ease;
-    }
-
-    .btn-buy:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn-buy:disabled {
-      background: rgba(255, 255, 255, 0.09);
-      color: var(--muted);
-      border-bottom-color: transparent;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 900px) {
-      .topbar {
-        grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 640px) {
+      .info-card {
+        top: auto;
+        bottom: 74px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
       }
-      .layout {
-        grid-template-columns: 1fr;
+      .hint {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="stat-box">
-      <div class="stat-label">Поп-монеты</div>
-      <div class="stat-val val-coins" id="coins">0</div>
+  <canvas id="space"></canvas>
+
+  <div class="top-bar">
+    <div class="glass brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-title">КОСМОС · СОЛНЕЧНАЯ СИСТЕМА</div>
+        <div class="brand-sub" id="camStatus">Свободный обзор · Колёсико: зум</div>
+      </div>
     </div>
-    <div class="stat-box">
-      <div class="stat-label">В секунду (DPS)</div>
-      <div class="stat-val val-dps" id="dps">0</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-label">Перерождения</div>
-      <div class="stat-val val-rebirth" id="rebirths">0</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-label">Крит / Удача</div>
-      <div class="stat-val val-luck" id="critInfo">10% · x3</div>
+
+    <div class="glass controls">
+      <button id="pauseBtn" title="Пауза / Продолжить">⏸ Пауза</button>
+      <button class="speed-btn" data-speed="0.25">0.25x</button>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="5">5x</button>
+      <button class="speed-btn" data-speed="20">20x</button>
+      <div class="divider"></div>
+      <button id="orbitsBtn" class="active">Орбиты</button>
+      <button id="labelsBtn" class="active">Подписи</button>
+      <button id="resetViewBtn">Сброс</button>
     </div>
   </div>
 
-  <div class="layout">
-    <div class="click-stage">
-      <div class="stage-header">
-        <span class="badge" id="perClickBadge">+1 за клик</span>
-        <span class="badge" id="feverGaugeBadge">Лихорадка: 0%</span>
+  <aside class="info-card hidden" id="infoCard">
+    <div class="info-head">
+      <div>
+        <div class="info-type" id="infoType">ПЛАНЕТА</div>
+        <h2 class="info-name" id="infoName">Земля</h2>
       </div>
-
-      <div class="fever-banner" id="feverBanner">🔥 ЗОЛОТАЯ ЛИХОРАДКА x2 К ДОХОДУ! 🔥</div>
-
-      <div class="pet-arena" id="arena">
-        <button class="character-btn" id="mainBtn" aria-label="Кликнуть по персонажу">
-          <div class="hat"></div>
-          <div class="face">
-            <div class="eyes">
-              <div class="eye" id="eyeL"></div>
-              <div class="eye" id="eyeR"></div>
-            </div>
-            <div class="mouth">
-              <div class="tongue"></div>
-            </div>
-          </div>
-        </button>
-        <div class="character-name">БОББИ-ПОП</div>
-        <div class="character-phrase" id="phrase">Жми на меня, пока я не лопнул от счастья!</div>
+      <button class="close-btn" id="closeCardBtn" title="Закрыть">✕</button>
+    </div>
+    <p class="info-desc" id="infoDesc"></p>
+    <div class="stats-grid">
+      <div class="mini-stat">
+        <div class="mini-label">От Солнца</div>
+        <div class="mini-val" id="statDist">—</div>
       </div>
-
-      <div class="action-row">
-        <button class="btn-rebirth" id="rebirthBtn" disabled>
-          ♻️ Перерождение (нужно 5 000)
-        </button>
-        <button class="btn-reset" id="resetBtn">Сброс сейва</button>
+      <div class="mini-stat">
+        <div class="mini-label">Год длится</div>
+        <div class="mini-val" id="statYear">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-label">Температура</div>
+        <div class="mini-val" id="statTemp">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-label">Спутники</div>
+        <div class="mini-val" id="statMoons">—</div>
       </div>
     </div>
+    <div class="fact-box" id="factBox"></div>
+  </aside>
 
-    <div class="upgrades-panel">
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="click">💪 Сила клика</button>
-        <button class="tab-btn" data-tab="pets">🐾 Питомцы</button>
-        <button class="tab-btn" data-tab="luck">⚡ Удача и буст</button>
-      </div>
-      <p class="branch-desc" id="branchDesc">Качай силу удара и множители каждого тапа.</p>
-      <div class="upgrade-list" id="upgradeList"></div>
-    </div>
+  <div class="hint">Тяни фон · Крути колёсико для зума · Кликни по объекту для фокуса</div>
+
+  <div class="dock-wrap">
+    <div class="glass dock" id="dock"></div>
   </div>
 
   <script>
-    const PHRASES = [
-      'Ещё-ещё! Монетки сами не накликются!',
-      'Ой, щекотно! Дай ещё один крит!',
-      'В Роблоксе уже бы завидовали такому темпу!',
-      'Мощный тап! Прямо в яблочко!',
-      'Копи на перерождение — станет ещё веселее!'
+    const canvas = document.getElementById('space');
+    const ctx = canvas.getContext('2d');
+
+    const BODIES = [
+      {
+        id: 'sun',
+        name: 'Солнце',
+        type: 'Жёлтый карлик (звезда)',
+        swatch: '#fbbf24',
+        radius: 36,
+        orbit: 0,
+        speed: 0,
+        angle: 0,
+        colors: ['#fff7ae', '#fbbf24', '#ea580c'],
+        glow: 'rgba(251, 191, 36, 0.35)',
+        dist: '0 а.е.',
+        year: '230 млн лет (вокруг центра Галактики)',
+        temp: '~5 500 °C (поверхность)',
+        moons: '8 планет на орбите',
+        desc: 'Массивный шар из раскалённой плазмы, на который приходится 99,86% массы всей Солнечной системы.',
+        fact: 'Каждую секунду Солнце превращает около 600 миллионов тонн водорода в гелий.'
+      },
+      {
+        id: 'mercury',
+        name: 'Меркурий',
+        type: 'Планета земной группы',
+        swatch: '#a8a29e',
+        radius: 6.5,
+        orbit: 78,
+        speed: 1.6,
+        angle: 0.9,
+        colors: ['#d6d3d1', '#8b8580', '#57534e'],
+        dist: '0.39 а.е. (57.9 млн км)',
+        year: '88 земных суток',
+        temp: 'от -180 °C до +430 °C',
+        moons: '0',
+        desc: 'Самая близкая к Солнцу и самая маленькая планета системы с поверхностью, покрытой кратерами.',
+        fact: 'Из-за почти полного отсутствия атмосферы днём здесь адская жара, а ночью — сильный мороз.'
+      },
+      {
+        id: 'venus',
+        name: 'Венера',
+        type: 'Планета земной группы',
+        swatch: '#f5d08a',
+        radius: 10.5,
+        orbit: 118,
+        speed: 1.18,
+        angle: 2.3,
+        colors: ['#fef08a', '#eab308', '#b45309'],
+        atmosphere: 'rgba(253, 224, 71, 0.22)',
+        dist: '0.72 а.е. (108.2 млн км)',
+        year: '225 земных суток',
+        temp: '~+465 °C',
+        moons: '0',
+        desc: 'Самая горячая планета Солнечной системы, окутанная плотными облаками из серной кислоты.',
+        fact: 'Венера вращается вокруг своей оси в обратную сторону — медленнее, чем делает оборот вокруг Солнца.'
+      },
+      {
+        id: 'earth',
+        name: 'Земля',
+        type: 'Планета земной группы',
+        swatch: '#38bdf8',
+        radius: 11.5,
+        orbit: 164,
+        speed: 1.0,
+        angle: 4.1,
+        colors: ['#7dd3fc', '#2563eb', '#15803d'],
+        atmosphere: 'rgba(56, 189, 248, 0.28)',
+        hasMoon: true,
+        dist: '1.00 а.е. (149.6 млн км)',
+        year: '365.25 суток',
+        temp: 'средняя ~+15 °C',
+        moons: '1 (Луна)',
+        desc: 'Наш дом — единственный известный мир с жидкими океанами на поверхности, защитной атмосферой и жизнью.',
+        fact: 'Около 71% поверхности Земли покрыто водой, а магнитное поле спасает нас от солнечного ветра.'
+      },
+      {
+        id: 'mars',
+        name: 'Марс',
+        type: 'Планета земной группы',
+        swatch: '#f87171',
+        radius: 8.5,
+        orbit: 210,
+        speed: 0.8,
+        angle: 5.4,
+        colors: ['#fca5a5', '#dc2626', '#7f1d1d'],
+        atmosphere: 'rgba(248, 113, 113, 0.16)',
+        dist: '1.52 а.е. (227.9 млн км)',
+        year: '687 земных суток',
+        temp: 'средняя ~-63 °C',
+        moons: '2 (Фобос и Деймос)',
+        desc: 'Красная планета с ржавой пылью, гигантскими вулканами и высохшими руслами древних рек.',
+        fact: 'На Марсе находится Олимп — самый высокий известный вулкан Солнечной системы (около 21 км).'
+      },
+      {
+        id: 'jupiter',
+        name: 'Юпитер',
+        type: 'Газовый гигант',
+        swatch: '#e0a96d',
+        radius: 24,
+        orbit: 292,
+        speed: 0.43,
+        angle: 1.5,
+        colors: ['#fde68a', '#d97706', '#78350f'],
+        bands: true,
+        atmosphere: 'rgba(251, 191, 36, 0.18)',
+        dist: '5.20 а.е. (778.5 млн км)',
+        year: '11.86 земных лет',
+        temp: '~-110 °C (верх облаков)',
+        moons: '95 (в т.ч. Европа, Ганимед)',
+        desc: 'Крупнейшая планета Солнечной системы, знаменитая полосатыми облаками и Большим красным пятном.',
+        fact: 'Юпитер настолько огромен, что внутри него поместилось бы более 1 300 Земель.'
+      },
+      {
+        id: 'saturn',
+        name: 'Сатурн',
+        type: 'Газовый гигант',
+        swatch: '#fcd34d',
+        radius: 20,
+        orbit: 376,
+        speed: 0.29,
+        angle: 3.6,
+        colors: ['#fef08a', '#eab308', '#854d0e'],
+        rings: true,
+        atmosphere: 'rgba(254, 240, 138, 0.16)',
+        dist: '9.58 а.е. (1.43 млрд км)',
+        year: '29.45 земных лет',
+        temp: '~-140 °C',
+        moons: '146 (в т.ч. Титан)',
+        desc: 'Планета с самой впечатляющей системой колец изо льда, камня и космической пыли.',
+        fact: 'Средняя плотность Сатурна ниже плотности воды — гипотетически он бы в ней плавал.'
+      },
+      {
+        id: 'uranus',
+        name: 'Уран',
+        type: 'Ледяной гигант',
+        swatch: '#67e8f9',
+        radius: 15,
+        orbit: 452,
+        speed: 0.2,
+        angle: 5.0,
+        colors: ['#a5f3fc', '#22d3ee', '#0e7490'],
+        atmosphere: 'rgba(103, 232, 249, 0.2)',
+        dist: '19.2 а.е. (2.87 млрд км)',
+        year: '84 земных года',
+        temp: '~-195 °C',
+        moons: '28',
+        desc: 'Ледяной гигант бирюзового оттенка из-за метана в верхних слоях атмосферы.',
+        fact: 'Ось вращения Урана наклонена почти на 98° — он буквально катится по своей орбите на боку.'
+      },
+      {
+        id: 'neptune',
+        name: 'Нептун',
+        type: 'Ледяной гигант',
+        swatch: '#60a5fa',
+        radius: 14.5,
+        orbit: 518,
+        speed: 0.15,
+        angle: 0.4,
+        colors: ['#93c5fd', '#2563eb', '#1e3a8a'],
+        atmosphere: 'rgba(96, 165, 250, 0.22)',
+        dist: '30.05 а.е. (4.5 млрд км)',
+        year: '164.8 земных лет',
+        temp: '~-200 °C',
+        moons: '16 (в т.ч. Тритон)',
+        desc: 'Самая дальняя большая планета Солнечной системы, где бушуют сверхзвуковые ветры.',
+        fact: 'Скорость ветров на Нептуне достигает 2 100 км/ч — быстрее звука.'
+      }
     ];
 
-    const BRANCH_INFO = {
-      click: 'Ветка «Сила клика»: увеличивает базовый доход с каждого нажатия.',
-      pets: 'Ветка «Питомцы»: весёлые спутники фармят монеты сами каждую секунду.',
-      luck: 'Ветка «Удача и буст»: повышает шанс крита, силу крита и общий множитель.'
-    };
+    // Звёздное небо и пояс астероидов между Марсом и Юпитером
+    const stars = Array.from({ length: 420 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      r: 0.5 + Math.random() * 1.6,
+      alpha: 0.25 + Math.random() * 0.75,
+      twinkle: 0.5 + Math.random() * 2.5
+    }));
 
-    const UPGRADES = [
-      // Ветка 1: Сила клика
-      { id: 'glove', branch: 'click', icon: '🥊', name: 'Боксёрская перчатка', desc: '+2 к силе клика', baseCost: 15, scale: 1.55, clickAdd: 2 },
-      { id: 'hammer', branch: 'click', icon: '🔨', name: 'Игрушечный молот', desc: '+12 к силе клика', baseCost: 120, scale: 1.6, clickAdd: 12 },
-      { id: 'rocket', branch: 'click', icon: '🚀', name: 'Турбо-палец', desc: '+65 к силе клика', baseCost: 850, scale: 1.65, clickAdd: 65 },
-      { id: 'crown', branch: 'click', icon: '👑', name: 'Корона Кликера', desc: '+320 к силе клика', baseCost: 4500, scale: 1.7, clickAdd: 320 },
+    const asteroids = Array.from({ length: 220 }, () => ({
+      dist: 242 + Math.random() * 26,
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.52 + Math.random() * 0.14,
+      size: 0.9 + Math.random() * 1.8
+    }));
 
-      // Ветка 2: Питомцы (авто-доход)
-      { id: 'slime', branch: 'pets', icon: '🟢', name: 'Желе-Слайм', desc: '+3 монет/сек', baseCost: 25, scale: 1.55, dpsAdd: 3 },
-      { id: 'cat', branch: 'pets', icon: '🐱', name: 'Кото-Боб', desc: '+18 монет/сек', baseCost: 180, scale: 1.6, dpsAdd: 18 },
-      { id: 'ufo', branch: 'pets', icon: '🛸', name: 'Мини-НЛО', desc: '+95 монет/сек', baseCost: 1100, scale: 1.65, dpsAdd: 95 },
-      { id: 'dragon', branch: 'pets', icon: '🐲', name: 'Неоновый Дракон', desc: '+500 монет/сек', baseCost: 6000, scale: 1.7, dpsAdd: 500 },
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
 
-      // Ветка 3: Удача и буст
-      { id: 'critChance', branch: 'luck', icon: '🎯', name: 'Снайперский глаз', desc: '+4% к шансу крита (макс. 70%)', baseCost: 60, scale: 1.75, critChanceAdd: 0.04, maxLvl: 15 },
-      { id: 'critPower', branch: 'luck', icon: '💥', name: 'Мега-Крит', desc: '+1.0x к силе крита', baseCost: 140, scale: 1.7, critMultAdd: 1.0 },
-      { id: 'multiplier', branch: 'luck', icon: '✨', name: 'Радужный бафф', desc: '+25% ко всему доходу', baseCost: 500, scale: 1.85, multAdd: 0.25 }
-    ];
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-    const SAVE_KEY = 'superPopClickerSave_v1';
+    // Состояние камеры и UI
+    let camX = 0;
+    let camY = 0;
+    let zoom = 1;
+    let paused = false;
+    let speedMult = 1;
+    let showOrbits = true;
+    let showLabels = true;
+    let selectedId = null;
+    let simTime = 0;
 
-    function defaultState() {
-      const levels = {};
-      UPGRADES.forEach(u => { levels[u.id] = 0; });
+    // Позиции объектов в мировых координатах (центр Солнца = 0, 0)
+    const worldPos = {};
+    function updatePositions(dt) {
+      if (!paused) {
+        simTime += dt * speedMult;
+      }
+      for (const b of BODIES) {
+        if (b.orbit === 0) {
+          worldPos[b.id] = { x: 0, y: 0 };
+        } else {
+          if (!paused) {
+            b.angle += b.speed * 0.24 * dt * speedMult;
+          }
+          worldPos[b.id] = {
+            x: Math.cos(b.angle) * b.orbit,
+            y: Math.sin(b.angle) * b.orbit
+          };
+        }
+      }
+    }
+
+    updatePositions(0);
+
+    // Если выбран объект, плавно тянем камеру к нему
+    function updateCamera(dt) {
+      if (selectedId && worldPos[selectedId]) {
+        const target = worldPos[selectedId];
+        const lerp = 1 - Math.exp(-7 * dt);
+        camX += (target.x - camX) * lerp;
+        camY += (target.y - camY) * lerp;
+      }
+    }
+
+    function worldToScreen(wx, wy) {
       return {
-        coins: 0,
-        rebirths: 0,
-        feverCharge: 0,
-        feverTimer: 0,
-        levels
+        x: width / 2 + (wx - camX) * zoom,
+        y: height / 2 + (wy - camY) * zoom
       };
     }
 
-    let state = loadState();
-    let activeTab = 'click';
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        if (!raw) return defaultState();
-        const parsed = JSON.parse(raw);
-        const base = defaultState();
-        return {
-          ...base,
-          ...parsed,
-          levels: { ...base.levels, ...(parsed.levels || {}) }
-        };
-      } catch {
-        return defaultState();
-      }
+    function screenToWorld(sx, sy) {
+      return {
+        x: (sx - width / 2) / zoom + camX,
+        y: (sy - height / 2) / zoom + camY
+      };
     }
 
-    function saveState() {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    }
+    // Панель планет внизу
+    const dock = document.getElementById('dock');
+    const infoCard = document.getElementById('infoCard');
+    const camStatus = document.getElementById('camStatus');
 
-    function getUpgradeCost(upg) {
-      const lvl = state.levels[upg.id] || 0;
-      return Math.floor(upg.baseCost * Math.pow(upg.scale, lvl));
-    }
+    function selectBody(id) {
+      selectedId = id;
+      document.querySelectorAll('.planet-chip').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === id);
+      });
 
-    function getGlobalMultiplier() {
-      const rebirthMult = 1 + state.rebirths * 1.5;
-      const buffMult = 1 + (state.levels.multiplier || 0) * 0.25;
-      const feverMult = state.feverTimer > 0 ? 2 : 1;
-      return rebirthMult * buffMult * feverMult;
-    }
-
-    function getClickPower() {
-      let base = 1;
-      for (const u of UPGRADES) {
-        if (u.clickAdd) base += (state.levels[u.id] || 0) * u.clickAdd;
-      }
-      return Math.round(base * getGlobalMultiplier());
-    }
-
-    function getDps() {
-      let base = 0;
-      for (const u of UPGRADES) {
-        if (u.dpsAdd) base += (state.levels[u.id] || 0) * u.dpsAdd;
-      }
-      return Math.round(base * getGlobalMultiplier());
-    }
-
-    function getCritChance() {
-      return Math.min(0.7, 0.1 + (state.levels.critChance || 0) * 0.04);
-    }
-
-    function getCritMult() {
-      return 3 + (state.levels.critMult || 0) * 1.0;
-    }
-
-    function getRebirthCost() {
-      return Math.floor(5000 * Math.pow(2.4, state.rebirths));
-    }
-
-    function formatNum(n) {
-      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-      return String(Math.floor(n));
-    }
-
-    const coinsEl = document.getElementById('coins');
-    const dpsEl = document.getElementById('dps');
-    const rebirthsEl = document.getElementById('rebirths');
-    const critInfoEl = document.getElementById('critInfo');
-    const perClickBadge = document.getElementById('perClickBadge');
-    const feverGaugeBadge = document.getElementById('feverGaugeBadge');
-    const feverBanner = document.getElementById('feverBanner');
-    const mainBtn = document.getElementById('mainBtn');
-    const phraseEl = document.getElementById('phrase');
-    const rebirthBtn = document.getElementById('rebirthBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const arena = document.getElementById('arena');
-    const upgradeList = document.getElementById('upgradeList');
-    const branchDesc = document.getElementById('branchDesc');
-
-    function spawnFloatingText(x, y, text, color) {
-      const el = document.createElement('div');
-      el.className = 'floating-text';
-      el.textContent = text;
-      el.style.left = x + 'px';
-      el.style.top = y + 'px';
-      el.style.color = color;
-      arena.appendChild(el);
-      setTimeout(() => el.remove(), 760);
-    }
-
-    mainBtn.addEventListener('pointerdown', (e) => {
-      mainBtn.classList.remove('squish');
-      mainBtn.classList.add('excited');
-      void mainBtn.offsetWidth;
-      mainBtn.classList.add('squish');
-
-      setTimeout(() => {
-        mainBtn.classList.remove('squish');
-        mainBtn.classList.remove('excited');
-      }, 130);
-
-      let gain = getClickPower();
-      const isCrit = Math.random() < getCritChance();
-      if (isCrit) {
-        gain = Math.round(gain * getCritMult());
+      if (!id) {
+        infoCard.classList.add('hidden');
+        camStatus.textContent = 'Свободный обзор · Колёсико: зум';
+        return;
       }
 
-      state.coins += gain;
+      const b = BODIES.find(item => item.id === id);
+      if (!b) return;
 
-      if (state.feverTimer <= 0) {
-        state.feverCharge = Math.min(100, state.feverCharge + 5);
-        if (state.feverCharge >= 100) {
-          state.feverCharge = 0;
-          state.feverTimer = 8;
-          phraseEl.textContent = '🔥 ЛИХОРАДКА АКТИВИРОВАНА! ЖМИ НА ВСЕ! 🔥';
+      document.getElementById('infoType').textContent = b.type;
+      document.getElementById('infoName').textContent = b.name;
+      document.getElementById('infoDesc').textContent = b.desc;
+      document.getElementById('statDist').textContent = b.dist;
+      document.getElementById('statYear').textContent = b.year;
+      document.getElementById('statTemp').textContent = b.temp;
+      document.getElementById('statMoons').textContent = b.moons;
+      document.getElementById('factBox').textContent = '💡 ' + b.fact;
+
+      infoCard.classList.remove('hidden');
+      camStatus.textContent = `Слежение: ${b.name} · Зум ${zoom.toFixed(1)}x`;
+    }
+
+    BODIES.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'planet-chip';
+      btn.dataset.id = b.id;
+      btn.innerHTML = `<span class="swatch" style="background:${b.swatch}"></span><span>${b.name}</span>`;
+      btn.addEventListener('click', () => selectBody(b.id));
+      dock.appendChild(btn);
+    });
+
+    document.getElementById('closeCardBtn').addEventListener('click', () => selectBody(null));
+
+    // Управление мышкой (перетаскивание, зум, клик по планете)
+    let isDragging = false;
+    let dragMoved = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let camStartX = 0;
+    let camStartY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      dragMoved = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      camStartX = camX;
+      camStartY = camY;
+      canvas.classList.add('dragging');
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      if (Math.hypot(dx, dy) > 4) {
+        dragMoved = true;
+        // При ручном перетаскивании отключаем жёсткий захват цели, чтобы можно было свободно уйти
+        if (selectedId) {
+          selectedId = null;
+          document.querySelectorAll('.planet-chip').forEach(el => el.classList.remove('active'));
+          camStatus.textContent = 'Свободный обзор · Колёсико: зум';
         }
       }
+      camX = camStartX - dx / zoom;
+      camY = camStartY - dy / zoom;
+    });
 
-      if (Math.random() < 0.25 && state.feverTimer <= 0) {
-        phraseEl.textContent = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+    window.addEventListener('pointerup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      canvas.classList.remove('dragging');
+
+      if (!dragMoved) {
+        const w = screenToWorld(e.clientX, e.clientY);
+        // Проверяем попадание по планетам (с небольшим запасом для удобного клика)
+        let clicked = null;
+        for (let i = BODIES.length - 1; i >= 0; i--) {
+          const b = BODIES[i];
+          const pos = worldPos[b.id];
+          const hitR = Math.max(b.radius + 6 / zoom, 10 / zoom);
+          if (Math.hypot(w.x - pos.x, w.y - pos.y) <= hitR) {
+            clicked = b.id;
+            break;
+          }
+        }
+        if (clicked) {
+          selectBody(clicked);
+          if (zoom < 1.35) zoom = 1.45;
+        }
       }
-
-      const rect = arena.getBoundingClientRect();
-      const fx = e.clientX - rect.left + (Math.random() * 24 - 12);
-      const fy = e.clientY - rect.top - 10;
-      spawnFloatingText(
-        fx,
-        fy,
-        isCrit ? `💥 +${formatNum(gain)} КРИТ!` : `+${formatNum(gain)}`,
-        isCrit ? '#ff3b8d' : '#ffd426'
-      );
-
-      render();
-      saveState();
     });
 
-    rebirthBtn.addEventListener('click', () => {
-      const cost = getRebirthCost();
-      if (state.coins < cost) return;
-      state.rebirths += 1;
-      state.coins = 0;
-      state.feverCharge = 0;
-      state.feverTimer = 0;
-      UPGRADES.forEach(u => { state.levels[u.id] = 0; });
-      phraseEl.textContent = `♻️ ПЕРЕРОЖДЕНИЕ №${state.rebirths}! Сила улетела в космос!`;
-      render();
-      saveState();
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      zoom = Math.max(0.35, Math.min(4.5, zoom * factor));
+      if (selectedId) {
+        const b = BODIES.find(item => item.id === selectedId);
+        camStatus.textContent = `Слежение: ${b ? b.name : ''} · Зум ${zoom.toFixed(1)}x`;
+      }
+    }, { passive: false });
+
+    // Кнопки панели управления
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? '▶ Пуск' : '⏸ Пауза';
+      pauseBtn.classList.toggle('active', paused);
     });
 
-    resetBtn.addEventListener('click', () => {
-      if (!confirm('Точно сбросить весь прогресс кликера?')) return;
-      state = defaultState();
-      phraseEl.textContent = 'Чистый лист! Погнали заново!';
-      render();
-      saveState();
-    });
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.speed-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        speedMult = Number(btn.dataset.speed);
+        paused = false;
+        pauseBtn.textContent = '⏸ Пауза';
+        pauseBtn.classList.remove('active');
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        activeTab = btn.dataset.tab;
-        branchDesc.textContent = BRANCH_INFO[activeTab];
-        renderUpgrades();
       });
     });
 
-    function buyUpgrade(id) {
-      const upg = UPGRADES.find(u => u.id === id);
-      if (!upg) return;
-      const lvl = state.levels[id] || 0;
-      if (upg.maxLvl && lvl >= upg.maxLvl) return;
-      const cost = getUpgradeCost(upg);
-      if (state.coins < cost) return;
+    const orbitsBtn = document.getElementById('orbitsBtn');
+    orbitsBtn.addEventListener('click', () => {
+      showOrbits = !showOrbits;
+      orbitsBtn.classList.toggle('active', showOrbits);
+    });
 
-      state.coins -= cost;
-      state.levels[id] = lvl + 1;
-      render();
-      saveState();
-    }
+    const labelsBtn = document.getElementById('labelsBtn');
+    labelsBtn.addEventListener('click', () => {
+      showLabels = !showLabels;
+      labelsBtn.classList.toggle('active', showLabels);
+    });
 
-    function renderUpgrades() {
-      const items = UPGRADES.filter(u => u.branch === activeTab);
-      upgradeList.innerHTML = '';
+    document.getElementById('resetViewBtn').addEventListener('click', () => {
+      zoom = 1;
+      camX = 0;
+      camY = 0;
+      selectBody(null);
+    });
 
-      for (const upg of items) {
-        const lvl = state.levels[upg.id] || 0;
-        const maxed = upg.maxLvl && lvl >= upg.maxLvl;
-        const cost = getUpgradeCost(upg);
-        const canAfford = !maxed && state.coins >= cost;
+    function drawBackground() {
+      const grad = ctx.createRadialGradient(
+        width * 0.5, height * 0.45, 20,
+        width * 0.5, height * 0.5, Math.max(width, height) * 0.75
+      );
+      grad.addColorStop(0, '#0d1630');
+      grad.addColorStop(0.55, '#070b1a');
+      grad.addColorStop(1, '#03050c');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
 
-        const card = document.createElement('div');
-        card.className = 'upg-card';
-        card.innerHTML = `
-          <div class="upg-left">
-            <div class="upg-icon">${upg.icon}</div>
-            <div>
-              <div>
-                <span class="upg-title">${upg.name}</span>
-                <span class="upg-lvl">Ур. ${lvl}${upg.maxLvl ? '/' + upg.maxLvl : ''}</span>
-              </div>
-              <div class="upg-sub">${upg.desc}</div>
-            </div>
-          </div>
-          <button class="btn-buy" ${canAfford ? '' : 'disabled'}>
-            ${maxed ? 'МАКС' : '🪙 ' + formatNum(cost)}
-          </button>
-        `;
-
-        card.querySelector('.btn-buy').addEventListener('click', () => buyUpgrade(upg.id));
-        upgradeList.appendChild(card);
+      for (const s of stars) {
+        const twinkle = 0.75 + 0.25 * Math.sin(simTime * s.twinkle + s.x * 100);
+        ctx.fillStyle = `rgba(226, 236, 255, ${s.alpha * twinkle})`;
+        ctx.beginPath();
+        ctx.arc(s.x * width, s.y * height, s.r, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
-    function render() {
-      coinsEl.textContent = formatNum(state.coins);
-      dpsEl.textContent = formatNum(getDps());
-      rebirthsEl.textContent = state.rebirths;
-      critInfoEl.textContent = `${Math.round(getCritChance() * 100)}% · x${getCritMult().toFixed(1)}`;
-      perClickBadge.textContent = `+${formatNum(getClickPower())} за клик`;
+    function drawOrbitsAndAsteroids() {
+      const center = worldToScreen(0, 0);
 
-      if (state.feverTimer > 0) {
-        feverBanner.classList.add('active');
-        feverGaugeBadge.textContent = `🔥 Лихорадка: ${state.feverTimer.toFixed(1)}с`;
-      } else {
-        feverBanner.classList.remove('active');
-        feverGaugeBadge.textContent = `Лихорадка: ${Math.floor(state.feverCharge)}%`;
-      }
-
-      const rebirthCost = getRebirthCost();
-      rebirthBtn.disabled = state.coins < rebirthCost;
-      rebirthBtn.textContent = `♻️ Перерождение (нужно ${formatNum(rebirthCost)})`;
-
-      renderUpgrades();
-    }
-
-    let lastTick = performance.now();
-    setInterval(() => {
-      const now = performance.now();
-      const dt = Math.min(0.5, (now - lastTick) / 1000);
-      lastTick = now;
-
-      let changed = false;
-      if (state.feverTimer > 0) {
-        state.feverTimer = Math.max(0, state.feverTimer - dt);
-        changed = true;
-      }
-
-      const dps = getDps();
-      if (dps > 0) {
-        state.coins += dps * dt;
-        changed = true;
-      }
-
-      if (changed) {
-        coinsEl.textContent = formatNum(state.coins);
-        dpsEl.textContent = formatNum(getDps());
-        perClickBadge.textContent = `+${formatNum(getClickPower())} за клик`;
-        if (state.feverTimer > 0) {
-          feverBanner.classList.add('active');
-          feverGaugeBadge.textContent = `🔥 Лихорадка: ${state.feverTimer.toFixed(1)}с`;
-        } else {
-          feverBanner.classList.remove('active');
-          feverGaugeBadge.textContent = `Лихорадка: ${Math.floor(state.feverCharge)}%`;
+      if (showOrbits) {
+        for (const b of BODIES) {
+          if (b.orbit <= 0) continue;
+          const r = b.orbit * zoom;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+          ctx.strokeStyle = b.id === selectedId
+            ? 'rgba(94, 234, 212, 0.55)'
+            : 'rgba(148, 187, 255, 0.14)';
+          ctx.lineWidth = b.id === selectedId ? 1.8 : 1;
+          ctx.stroke();
+          ctx.restore();
         }
-        const rebirthCost = getRebirthCost();
-        rebirthBtn.disabled = state.coins < rebirthCost;
-        rebirthBtn.textContent = `♻️ Перерождение (нужно ${formatNum(rebirthCost)})`;
       }
-    }, 100);
 
-    setInterval(saveState, 3000);
-    render();
-  </script>
-</body>
-</html>
+      // Пояс астероидов
+      for (const a of asteroids) {
+        const ang = a.angle + simTime * a.speed * 0.08;
+        const wx = Math.cos(ang) * a.dist;
+        const wy = Math.sin(ang) * a.dist;
+        const sp = worldToScreen(wx, wy);
+        ctx.fillStyle = 'rgba(180, 190, 215, 0.45)';
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, Math.max(0.7, a.size * zoom), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawBody(b) {
+      const pos = worldPos[b.id];
+      const sp = worldToScreen(pos.x, pos.y);
+      const r = Math.max(2.5, b.radius * zoom);
+
+      ctx.save();
+
+      // Свечение Солнца или атмосферы
+      if (b.id === 'sun') {
+        const pulse = 1 + 0.03 * Math.sin(simTime * 3.5);
+        const halo = ctx.createRadialGradient(sp.x, sp.y, r * 0.6, sp.x, sp.y, r * 2.8 * pulse);
+        halo.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+        halo.addColorStop(0.5, 'rgba(234, 88, 12, 0.14)');
+        halo.addColorStop(1, 'rgba(234, 88, 12, 0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r * 2.8 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (b.atmosphere) {
+        ctx.fillStyle = b.atmosphere;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r * 1.24, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Кольца Сатурна (задняя дуга)
+      if (b.rings) {
+        ctx.save();
+        ctx.translate(sp.x, sp.y);
+        ctx.rotate(-0.32);
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+        ctx.lineWidth = Math.max(2, 5 * zoom);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 2.05, r * 0.56, 0, Math.PI, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Тело планеты / звезды с объёмным градиентом
+      const g = ctx.createRadialGradient(
+        sp.x - r * 0.35,
+        sp.y - r * 0.35,
+        r * 0.1,
+        sp.x,
+        sp.y,
+        r
+      );
+      g.addColorStop(0, b.colors[0]);
+      g.addColorStop(0.55, b.colors[1]);
+      g.addColorStop(1, b.colors[2]);
+
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Полосы Юпитера
+      if (b.bands && r > 6) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = 'rgba(120, 53, 15, 0.35)';
+        ctx.fillRect(sp.x - r, sp.y - r * 0.35, r * 2, r * 0.2);
+        ctx.fillRect(sp.x - r, sp.y + r * 0.15, r * 2, r * 0.22);
+        ctx.restore();
+      }
+
+      // Кольца Сатурна (передняя дуга поверх планеты)
+      if (b.rings) {
+        ctx.save();
+        ctx.translate(sp.x, sp.y);
+        ctx.rotate(-0.32);
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.72)';
+        ctx.lineWidth = Math.max(2, 5 * zoom);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 2.05, r * 0.56, 0, 0, Math.PI);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Луна у Земли
+      if (b.hasMoon) {
+        const moonDist = (b.radius + 11) * zoom;
+        const moonAng = simTime * 2.6;
+        const mx = sp.x + Math.cos(moonAng) * moonDist;
+        const my = sp.y + Math.sin(moonAng) * moonDist;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(mx, my, Math.max(1.5, 2.6 * zoom), 0, Math.
